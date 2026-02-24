@@ -38,4 +38,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# generated build artifacts
+/src/generated/
 next-env.d.ts

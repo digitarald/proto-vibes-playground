@@ -1,26 +1,68 @@
 @import "tailwindcss";
+@import "@vscode/codicons/dist/codicon.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* VS Code 2026 Dark palette */
+  --background: #121314;
+  --foreground: #bfbfbf;
+  --foreground-bright: #ededed;
+  --muted: #8C8C8C;
+  --border: #2A2B2C;
+  --card: #202122;
+  --chrome: #191A1B;
+  --accent: #3994BC;
+  --accent-hover: #3E9BC4;
+  --accent-light: #3994BC26;
+  --link: #48A0C7;
+  --hover: #262728;
+  --error: #f48771;
+  --success: #73c991;
+  --warning: #e5ba7d;
+
+  /* Depth system (stealth shadows) */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --shadow-sm: 0 0 4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 0 6px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 0 12px rgba(0, 0, 0, 0.14);
+  --shadow-hover: 0 0 8px rgba(0, 0, 0, 0.12);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-foreground-bright: var(--foreground-bright);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-chrome: var(--chrome);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-light: var(--accent-light);
+  --color-link: var(--link);
+  --color-hover: var(--hover);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-hover: var(--shadow-hover);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Smooth page transitions */
+@view-transition {
+  navigation: auto;
 }

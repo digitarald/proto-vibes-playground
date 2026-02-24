@@ -1,65 +1,41 @@
-import Image from "next/image";
+import { PrototypeIndex } from "./prototype-index";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border bg-chrome/80 backdrop-blur-sm">
+        <div className="mx-auto max-w-3xl px-6 py-8">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground-bright">
+            Proto Vibes
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-1 text-sm text-muted">
+            A playground for rapid UI prototyping — self-contained, disposable, and always live.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      {/* Content */}
+      <PrototypeIndex />
+
+      {/* CTA */}
+      <footer className="border-t border-border">
+        <div className="mx-auto max-w-3xl px-6 py-10 text-center">
+          <p className="text-lg font-medium text-foreground-bright">
+            Build something new
+          </p>
+          <p className="mt-1.5 text-sm text-muted">
+            Ask Copilot to create a prototype — describe what you want and it
+            scaffolds everything for you.
+          </p>
+          <div className="mt-5 inline-flex items-center gap-2 rounded-lg bg-accent/10 border border-accent/20 px-4 py-2 text-sm text-accent">
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm.93 11.41l-.07.07H7.14l-.07-.07V9.55l.07-.07h1.72l.07.07v1.86zm.12-3.36l-.15.07H7.1l-.14-.07-.08-.1L6.44 4.2l.07-.12h3l.06.12L9.13 7.95l-.08.1z" />
+            </svg>
+            <span className="font-mono text-xs">/new-prototype</span>
+          </div>
         </div>
-      </main>
+      </footer>
     </div>
   );
 }

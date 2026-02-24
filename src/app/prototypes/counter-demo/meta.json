@@ -1,0 +1,7 @@
+{
+  "title": "Counter Demo",
+  "description": "A simple interactive counter using React state. Demonstrates that client components work within the prototype sandbox.",
+  "author": "Team",
+  "tags": ["interactive", "client-component", "react"],
+  "createdAt": "2026-02-24"
+}

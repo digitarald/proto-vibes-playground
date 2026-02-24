@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/generate-index.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@vscode/codicons": "^0.0.44",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"

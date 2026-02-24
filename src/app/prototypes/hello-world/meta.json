@@ -1,0 +1,7 @@
+{
+  "title": "Hello World",
+  "description": "A minimal static prototype to validate the scaffold. Nothing fancy — just proof that the system works.",
+  "author": "Team",
+  "tags": ["starter", "static"],
+  "createdAt": "2026-02-24"
+}
