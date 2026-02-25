@@ -4,6 +4,9 @@ This playground is for rapid prototyping of VS Code features and UI concepts. Pr
 
 ## Development Principles
 
-1. **Design First, Ship Fast** — Go straight from idea to rendered UI. No tests, no migrations, no abstractions "for later." If it looks right in the browser, it's done.
+1. **Design First, Ship Fast** — Go straight from idea to rendered UI. No tests, no code reviews, no migrations, no abstractions "for later." If it looks right in the browser (use the integrated browser preview) and feels right (use browser tools), it's done.
 2. **Be Creatively Bold** — No bland placeholders. Use motion, color, and interaction to make prototypes feel alive. The VS Code 2026 design tokens (see `design-system` skill) are guardrails, not the ceiling.
 3. **Self-Contained, Zero Ceremony** — Each prototype is one folder (`meta.json` + `page.tsx`). No shared state, no cross-prototype imports. Inline what you need.
+4. **Plan UX-first** — Prioritize user experience decisions and details during planning, not design system or technical constraints.
+5. **Prototype Real Surfaces** — The prototype page IS the surface. Build an actual VS Code panel, sidebar, dialog, or flow — not a mockup wrapped in labeled scaffolding.
+6. **No Meta-UI** — No "Prototype" headers, no "Live Surface" labels, no control sidebars. If iteration controls are needed, use a minimal floating toolbar or keyboard shortcut — never break the real-world illusion.

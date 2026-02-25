@@ -47,15 +47,10 @@ If the prototype is **interactive** (needs state, event handlers), add `"use cli
 
 Use the VS Code 2026 design tokens from `globals.css` — load the `design-system` skill for the full palette and patterns. Key classes:
 
-- Page wrapper: `flex flex-col items-center justify-center gap-6 py-24`
-- Heading: `text-4xl font-bold tracking-tight text-foreground-bright`
-- Body text: `text-muted`
 - Cards/surfaces: `rounded-xl border border-border bg-card`
 - Buttons: `rounded-full border border-border bg-card hover:border-accent/30 hover:shadow-md`
 
 For VS Code icons, use the shared `Codicon` component — see the `design-system` skill for usage and icon reference.
-
-Start with a minimal layout that shows the title and a brief description, then hand off to the user to build the actual prototype UI.
 
 ### 4. Ensure the dev server is running
 

@@ -33,19 +33,28 @@
       "type": "shell",
       "command": "npm run build",
       "group": "build",
-      "problemMatcher": "$tsc"
+      "problemMatcher": "$tsc",
+      "presentation": {
+        "reveal": "silent"
+      }
     },
     {
       "label": "generate-index",
       "type": "shell",
       "command": "node scripts/generate-index.mjs",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent"
+      }
     },
     {
       "label": "lint",
       "type": "shell",
       "command": "npm run lint",
-      "problemMatcher": "$eslint-stylish"
+      "problemMatcher": "$eslint-stylish",
+      "presentation": {
+        "reveal": "silent"
+      }
     }
   ]
 }
