@@ -349,17 +349,29 @@ export default function AgentOrchestrationBoardPage() {
                           <Codicon name={agent.icon} className={styles.cardIcon} />
                           <span>{agent.name}</span>
                         </div>
-                        {agent.status === "running" && (
-                          <span className={styles.cardPercent}>{Math.round(agent.progress)}%</span>
-                        )}
-                        {agent.status === "completed" && (
-                          <Codicon name="check" className={styles.cardDone} />
-                        )}
-                        {agent.status === "needs-input" && (
-                          <span className={styles.cardAlert}>
-                            <Codicon name="bell" />
-                          </span>
-                        )}
+                        <div className={styles.cardStatus}>
+                          {isDep && (
+                            <span className={`${styles.depBadge} ${styles.depBadge_up}`}>
+                              <Codicon name="arrow-small-up" /> dep
+                            </span>
+                          )}
+                          {isDependent && (
+                            <span className={`${styles.depBadge} ${styles.depBadge_down}`}>
+                              <Codicon name="arrow-small-down" /> needs
+                            </span>
+                          )}
+                          {agent.status === "running" && (
+                            <span className={styles.cardPercent}>{Math.round(agent.progress)}%</span>
+                          )}
+                          {agent.status === "completed" && (
+                            <Codicon name="check" className={styles.cardDone} />
+                          )}
+                          {agent.status === "needs-input" && (
+                            <span className={styles.cardAlert}>
+                              <Codicon name="bell" />
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Progress bar for running agents */}
@@ -422,21 +434,6 @@ export default function AgentOrchestrationBoardPage() {
                         </div>
                       )}
 
-                      {/* Dependency hint on hover */}
-                      {(isDep || isDependent) && !isExpanded && (
-                        <div className={styles.depHint}>
-                          {isDep && (
-                            <span className={styles.depLabel}>
-                              <Codicon name="arrow-up" /> dependency
-                            </span>
-                          )}
-                          {isDependent && (
-                            <span className={styles.depLabel}>
-                              <Codicon name="arrow-down" /> dependent
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
