@@ -1,0 +1,7 @@
+{
+  "title": "Agent Orchestration Board",
+  "description": "Kanban-style control board for tracking multi-agent orchestration with real-time status, dependency visualization, and human-in-the-loop decision points.",
+  "author": "Team",
+  "tags": ["agents", "kanban", "orchestration", "multi-agent"],
+  "createdAt": "2026-02-26"
+}
