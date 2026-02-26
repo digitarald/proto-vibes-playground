@@ -53,11 +53,11 @@ Reference: https://github.com/microsoft/vscode/tree/main/extensions/theme-2026
 
 ### Hierarchy
 
-- **Hero headings:** `text-5xl font-semibold tracking-tight text-foreground-bright`
-- **Card headings:** `text-xl font-medium text-foreground`
-- **Labels:** `text-sm font-medium uppercase tracking-widest text-accent`
-- **Body:** `text-sm leading-relaxed text-muted` or `text-foreground`
-- **Code:** `font-mono text-xs text-muted bg-card rounded px-1.5 py-0.5`
+- **Hero headings:** `font-size: 2.25rem; font-weight: 700; letter-spacing: -0.025em; color: var(--foreground-bright)`
+- **Card headings:** `font-size: 1.25rem; font-weight: 500; color: var(--foreground)`
+- **Labels:** `font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent)`
+- **Body:** `font-size: 0.875rem; line-height: 1.625; color: var(--muted)` or `color: var(--foreground)`
+- **Code:** `font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); background: var(--card); border-radius: var(--radius-sm); padding: 0.125rem 0.375rem`
 
 ## Depth System (Stealth Shadows)
 
@@ -91,19 +91,48 @@ background: color-mix(in srgb, var(--card) 60%, transparent);
 ```
 
 Use sparingly for:
-- Navigation chrome (`bg-chrome/80 backdrop-blur-sm`)
+- Navigation chrome: `background: color-mix(in srgb, var(--chrome) 80%, transparent); backdrop-filter: blur(8px)`
 - Popovers and floating widgets
 - Command palette style overlays
 
 ## Interaction Patterns
 
 ### Hover States
-- Cards: `hover:border-accent/30 hover:shadow-[0_0_12px_rgba(0,0,0,0.14)]`
-- Links/nav: `text-muted hover:text-foreground`
-- Accent links: `text-accent hover:text-accent-hover`
+
+```css
+/* Cards */
+.card:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Links / nav */
+.link {
+  color: var(--muted);
+}
+.link:hover {
+  color: var(--foreground);
+}
+
+/* Accent links */
+.accentLink {
+  color: var(--accent);
+}
+.accentLink:hover {
+  color: var(--accent-hover);
+}
+```
 
 ### Focus States
-- Inputs: `focus:border-accent/50 focus:ring-1 focus:ring-accent/30`
+
+```css
+.input:focus {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+  outline: none;
+}
+```
+
 - Focus border (keyboard): `#3994BCB3` (accent at 70% opacity)
 
 ### Selection
@@ -137,12 +166,12 @@ Use the shared `Codicon` React component:
 import { Codicon } from "../../components/codicon";
 
 <Codicon name="add" />
-<Codicon name="settings-gear" className="text-accent" />
+<Codicon name="settings-gear" style={{ color: 'var(--accent)' }} />
 <Codicon name="loading" spin />
 ```
 
-- Default size: `16px` (inherits from the codicon font). Scale with `text-lg`, `text-xl`, etc.
-- Color: inherits `currentColor` — style with `text-muted`, `text-accent`, `text-error`, etc.
+- Default size: `16px` (inherits from the codicon font). Scale with `font-size`.
+- Color: inherits `currentColor` — style via CSS module class or inline `style`.
 - Spin: pass `spin` prop for loading/sync/gear animations.
 - Browse all icons: https://microsoft.github.io/vscode-codicons/dist/codicon.html
 
@@ -168,16 +197,78 @@ Common icons for VS Code prototypes:
 | `extensions` | Extensions | Extension UI |
 | `account` | User | Profile, auth |
 
+## Styling Approach
+
+This project uses **CSS Modules** with CSS custom properties — no utility-class framework.
+
+### Pattern
+
+Each page/component has a co-located `.module.css` file:
+
+```tsx
+// page.tsx
+import styles from './page.module.css';
+
+export default function MyPage() {
+  return <div className={styles.wrapper}>...</div>;
+}
+```
+
+```css
+/* page.module.css */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.wrapper:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+```
+
+### Shared base classes
+
+Import `base.module.css` from `src/app/` for common layout:
+
+```tsx
+import base from '../../base.module.css';
+import styles from './page.module.css';
+
+<div className={base.page}>       {/* min-height: 100vh + background */}
+  <nav className={base.nav}>      {/* chrome bar with backdrop blur */}
+    <div className={base.container}> {/* centered max-width container */}
+```
+
+Available base classes: `page`, `nav`, `container`, `containerWide`, `card`.
+
+### Opacity with color-mix
+
+For translucent colors, use `color-mix`:
+
+```css
+background: color-mix(in srgb, var(--accent) 10%, transparent); /* 10% accent */
+border-color: color-mix(in srgb, var(--accent) 30%, transparent); /* 30% accent */
+```
+
 ## Do / Don't
 
 ### Do
-- Use CSS custom properties (`var(--accent)`) or Tailwind theme colors (`text-accent`)
+- Use CSS custom properties (`var(--accent)`) in CSS Modules
+- Use `color-mix(in srgb, ...)` for opacity variants
 - Prefer shadows for depth over visible borders
 - Keep contrast accessible — muted text (`#8C8C8C`) on dark backgrounds meets 4.5:1
 - Use translucent chrome sparingly for navigation, not for content areas
+- Co-locate `.module.css` files next to their component/page
 
 ### Don't
+- Use Tailwind utility classes — this project uses CSS Modules
 - Use warm/stone color palettes (`stone-*`, amber, `#d97706`)
 - Use decorative or serif fonts
 - Add hard drop shadows — use the soft spread shadow system
 - Over-use color — the palette is restrained, with accent reserved for interactive elements
+- Create global CSS classes — always use CSS Modules for scoping

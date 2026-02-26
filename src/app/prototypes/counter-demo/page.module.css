@@ -1,0 +1,272 @@
+/* ── Panel container ── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+/* ── Title bar ── */
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 35px;
+  padding-inline: 10px;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+
+.titleSection {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.titleIcon {
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.titleText {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--foreground-bright);
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.toolbarButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.toolbarButton:hover {
+  background: var(--hover);
+  color: var(--foreground);
+}
+
+.toolbarButton:active {
+  background: color-mix(in srgb, var(--hover) 70%, var(--border));
+}
+
+.toolbarSeparator {
+  width: 1px;
+  height: 16px;
+  margin-inline: 4px;
+  background: var(--border);
+}
+
+/* ── Body ── */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+}
+
+/* ── Value display ── */
+.valueSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 28px 20px 24px;
+  background: var(--card);
+}
+
+.valueLabel {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.value {
+  font-family: var(--font-mono);
+  font-size: 48px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--foreground-bright);
+}
+
+.valueMeta {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+
+.positive {
+  color: var(--success);
+}
+
+.negative {
+  color: var(--error);
+}
+
+.neutral {
+  color: var(--muted);
+}
+
+/* ── Action buttons ── */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border: none;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.actionButton:hover {
+  background: var(--hover);
+}
+
+.actionButton:active {
+  background: color-mix(in srgb, var(--hover) 70%, var(--border));
+}
+
+.actionPrimary {
+  color: var(--accent);
+}
+
+.actionPrimary:hover {
+  color: var(--accent-hover);
+}
+
+/* ── History ── */
+.historySection {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+}
+
+.historyHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.historyIcon {
+  font-size: 14px;
+}
+
+.historyCount {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: var(--muted);
+}
+
+.historyList {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  font-size: 12px;
+  transition: background 0.1s;
+}
+
+.historyItem:hover {
+  background: var(--hover);
+}
+
+.historyAction {
+  color: var(--foreground);
+  min-width: 72px;
+}
+
+.historyValue {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground-bright);
+  font-weight: 600;
+  min-width: 32px;
+  text-align: right;
+}
+
+.historyTime {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.historyUp {
+  color: var(--success);
+  font-size: 14px;
+}
+
+.historyDown {
+  color: var(--error);
+  font-size: 14px;
+}
+
+.historyReset {
+  color: var(--warning);
+  font-size: 14px;
+}

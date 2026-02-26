@@ -45,10 +45,42 @@ src/app/prototypes/<slug>/
 
 If the prototype is **interactive** (needs state, event handlers), add `"use client";` at the top.
 
-Use the VS Code 2026 design tokens from `globals.css` — load the `design-system` skill for the full palette and patterns. Key classes:
+Use CSS Modules with VS Code 2026 design tokens from `globals.css` — load the `design-system` skill for the full palette and patterns.
 
-- Cards/surfaces: `rounded-xl border border-border bg-card`
-- Buttons: `rounded-full border border-border bg-card hover:border-accent/30 hover:shadow-md`
+Create a co-located `page.module.css` with styles using CSS custom properties:
+
+```tsx
+// page.tsx
+import styles from './page.module.css';
+
+export default function MyPrototypePage() {
+  return (
+    <div className={styles.wrapper}>
+      ...
+    </div>
+  );
+}
+```
+
+```css
+/* page.module.css */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius-lg);
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: var(--shadow-md);
+}
+```
 
 For VS Code icons, use the shared `Codicon` component — see the `design-system` skill for usage and icon reference.
 

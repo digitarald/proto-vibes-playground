@@ -1,4 +1,6 @@
 import Link from "next/link";
+import base from "../base.module.css";
+import styles from "./layout.module.css";
 
 export default function PrototypesLayout({
   children,
@@ -6,19 +8,16 @@ export default function PrototypesLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b border-border bg-chrome/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-6 py-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
-          >
+    <div className={base.page}>
+      <nav className={base.nav}>
+        <div className={`${base.containerWide} ${styles.navInner}`}>
+          <Link href="/" className={styles.backLink}>
             <svg
               width="16"
               height="16"
               viewBox="0 0 16 16"
               fill="none"
-              className="shrink-0"
+              className={styles.backIcon}
             >
               <path
                 d="M10 12L6 8L10 4"
@@ -32,7 +31,7 @@ export default function PrototypesLayout({
           </Link>
         </div>
       </nav>
-      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+      <main className={`${base.containerWide} ${styles.main}`}>{children}</main>
     </div>
   );
 }

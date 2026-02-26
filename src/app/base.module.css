@@ -1,0 +1,30 @@
+/* Shared layout primitives for the playground shell */
+
+.page {
+  min-height: 100vh;
+  background: var(--background);
+}
+
+.nav {
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--chrome) 80%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.container {
+  max-width: 48rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+.containerWide {
+  max-width: 64rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+.card {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius-lg);
+}

@@ -1,0 +1,61 @@
+.header {
+  padding-block: 2rem;
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--foreground-bright);
+}
+
+.subtitle {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.footer {
+  border-top: 1px solid var(--border);
+}
+
+.footerInner {
+  padding-block: 2.5rem;
+  text-align: center;
+}
+
+.ctaTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--foreground-bright);
+}
+
+.ctaDescription {
+  margin-top: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.ctaBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-size: 0.875rem;
+  color: var(--accent);
+}
+
+.ctaIcon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.ctaCode {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}

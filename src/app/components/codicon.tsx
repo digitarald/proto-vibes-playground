@@ -5,7 +5,7 @@
  *
  * @example
  * <Codicon name="add" />
- * <Codicon name="settings-gear" className="text-accent" />
+ * <Codicon name="settings-gear" style={{ color: 'var(--accent)' }} />
  * <Codicon name="loading" spin />
  */
 export function Codicon({

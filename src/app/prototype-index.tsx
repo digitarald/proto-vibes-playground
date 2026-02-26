@@ -1,5 +1,7 @@
 import Link from "next/link";
 import prototypes from "@/generated/prototypes-index.json";
+import base from "./base.module.css";
+import styles from "./prototype-index.module.css";
 
 interface Prototype {
   slug: string;
@@ -14,26 +16,22 @@ export function PrototypeIndex() {
   const items = prototypes as Prototype[];
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-6">
-      <div className="divide-y divide-border">
+    <main className={`${base.container} ${styles.list}`}>
+      <div className={styles.divider}>
         {items.map((proto) => (
           <Link
             key={proto.slug}
             href={`/prototypes/${proto.slug}`}
-            className="group block py-3 transition-colors hover:bg-hover/50 -mx-3 px-3 rounded-md"
+            className={styles.item}
           >
-            <div className="flex items-baseline gap-4">
-              <h2 className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">
-                {proto.title}
-              </h2>
-              <p className="flex-1 truncate text-sm text-muted">
-                {proto.description}
-              </p>
+            <div className={styles.itemRow}>
+              <h2 className={styles.itemTitle}>{proto.title}</h2>
+              <p className={styles.itemDescription}>{proto.description}</p>
             </div>
-            <div className="mt-1 flex items-center gap-3 text-xs text-muted">
+            <div className={styles.itemMeta}>
               <span>{proto.author}</span>
               <span>·</span>
-              <span className="tabular-nums">
+              <span className={styles.tabularNums}>
                 {new Date(proto.createdAt).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
