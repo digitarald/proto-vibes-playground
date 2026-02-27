@@ -1,6 +1,7 @@
 import Link from "next/link";
 import base from "../base.module.css";
 import styles from "./layout.module.css";
+import { DesignDocLink } from "./design-doc-link";
 
 export default function PrototypesLayout({
   children,
@@ -29,6 +30,7 @@ export default function PrototypesLayout({
             </svg>
             All Prototypes
           </Link>
+          <DesignDocLink />
         </div>
       </nav>
       <main className={`${base.containerWide} ${styles.main}`}>{children}</main>

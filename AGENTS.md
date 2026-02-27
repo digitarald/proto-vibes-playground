@@ -10,3 +10,4 @@ This playground is for rapid prototyping of VS Code features and UI concepts. Pr
 4. **Plan UX-first** — Plans prioritize the why, what, and user experience; not design system, technical constraints and implementation details.
 5. **Prototype Real Surfaces** — The prototype page IS the surface. Build an actual VS Code panel, sidebar, dialog, or flow — not a mockup wrapped in labeled scaffolding.
 6. **No Meta-UI** — No "Prototype" headers, no "Live Surface" labels, no control sidebars. If iteration controls are needed, use a minimal floating toolbar or keyboard shortcut — never break the real-world illusion.
+7. **Capture Learnings in DESIGN.md** — Each prototype gets a `DESIGN.md` (see `design-doc` skill) that records what problem we're solving, what patterns we validated (including what failed), and open questions. Written for scanability — anyone on the team can pick it up. Update it as the prototype evolves.

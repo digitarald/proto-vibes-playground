@@ -84,10 +84,38 @@ export default function MyPrototypePage() {
 
 For VS Code icons, use the shared `Codicon` component — see the `design-system` skill for usage and icon reference.
 
-### 4. Ensure the dev server is running
+### 4. Create `DESIGN.md`
+
+Bootstrap a starter design doc so the team has a place to capture learnings from the first iteration. Load the `design-doc` skill for the full structure reference.
+
+```markdown
+# <Title> — Design Doc
+
+> **Status:** Early prototype · **Last updated:** <YYYY-MM-DD>
+
+---
+
+## Problem
+
+<One paragraph describing what user problem or design question this prototype explores.>
+
+## Solution
+
+<One paragraph describing the UX approach — what the user sees and does, not how it's built.>
+
+---
+
+## Open Questions
+
+1. <First open question for the next iteration>
+```
+
+Keep it minimal — sections like **Validated Patterns**, **Structure**, and **Scenario** get added as the prototype evolves.
+
+### 5. Ensure the dev server is running
 
 Check if the `dev` task is already running. If not, start it using `run_task` with the `shell: dev` task. Wait for it to be ready before proceeding.
 
-### 5. Open in integrated browser
+### 6. Open in integrated browser
 
 Open the prototype page at `http://localhost:3000/prototypes/<slug>` in the integrated browser so the user can see it immediately.

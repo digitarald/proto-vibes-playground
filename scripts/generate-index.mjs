@@ -20,7 +20,8 @@ const entries = readdirSync(prototypesDir, { withFileTypes: true })
     const metaPath = join(prototypesDir, d.name, "meta.json");
     if (!existsSync(metaPath)) return null;
     const meta = JSON.parse(readFileSync(metaPath, "utf-8"));
-    return { slug: d.name, ...meta };
+    const hasDesign = existsSync(join(prototypesDir, d.name, "DESIGN.md"));
+    return { slug: d.name, ...meta, hasDesign };
   })
   .filter(Boolean)
   .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));

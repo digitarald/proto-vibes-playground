@@ -346,20 +346,18 @@ export default function AgentOrchestrationBoardPage() {
                     >
                       <div className={styles.cardHeader}>
                         <div className={styles.cardTitle}>
-                          <Codicon name={agent.icon} className={styles.cardIcon} />
+                          <span className={styles.iconWrap}>
+                            <Codicon name={agent.icon} className={`${styles.cardIcon} ${isDep || isDependent ? styles.cardIconHidden : ""}`} />
+                            {isDep && (
+                              <Codicon name="arrow-up" className={`${styles.depIcon} ${styles.depIcon_up}`} />
+                            )}
+                            {isDependent && (
+                              <Codicon name="arrow-down" className={`${styles.depIcon} ${styles.depIcon_down}`} />
+                            )}
+                          </span>
                           <span>{agent.name}</span>
                         </div>
                         <div className={styles.cardStatus}>
-                          {isDep && (
-                            <span className={`${styles.depBadge} ${styles.depBadge_up}`}>
-                              <Codicon name="arrow-small-up" /> dep
-                            </span>
-                          )}
-                          {isDependent && (
-                            <span className={`${styles.depBadge} ${styles.depBadge_down}`}>
-                              <Codicon name="arrow-small-down" /> needs
-                            </span>
-                          )}
                           {agent.status === "running" && (
                             <span className={styles.cardPercent}>{Math.round(agent.progress)}%</span>
                           )}
