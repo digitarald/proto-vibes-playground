@@ -1,0 +1,380 @@
+/* Floating tooltip container */
+.scene {
+  position: relative;
+  min-height: 100vh;
+  background: var(--background);
+}
+
+/* Tooltip popup */
+.tooltip {
+  width: 320px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: fixed;
+  bottom: 44px;
+  right: 60px;
+}
+
+/* Header row */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 0;
+}
+
+.headerTitle {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground-bright);
+}
+
+.headerAction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.headerAction:hover {
+  background: var(--hover);
+  color: var(--foreground);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 12px;
+  margin-top: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--foreground);
+}
+
+.tabActive {
+  color: var(--foreground-bright);
+  border-bottom-color: var(--accent);
+}
+
+/* Content body */
+.body {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px 12px;
+  gap: 6px;
+}
+
+/* Toggle row */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1.5px solid var(--accent);
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: white;
+  font-size: 12px;
+}
+
+.toggleLabel {
+  font-size: 0.8125rem;
+  color: var(--foreground);
+}
+
+/* Eagerness row */
+.eagernessRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.eagernessLabel {
+  font-size: 0.8125rem;
+  color: var(--foreground);
+}
+
+.eagernessValue {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+/* Divider */
+.divider {
+  height: 0;
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 4px 0;
+}
+
+/* Snooze row */
+.snoozeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.snoozeBtn {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--foreground-bright);
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.snoozeBtn:hover {
+  background: color-mix(in srgb, var(--hover) 80%, var(--foreground) 20%);
+}
+
+.snoozeHint {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Checkbox unchecked */
+.checkboxOff {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1.5px solid var(--muted);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: white;
+  font-size: 12px;
+}
+
+/* Sessions Sync section */
+.syncSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.syncHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.syncBadge {
+  font-size: 0.6875rem;
+  color: var(--warning);
+  margin-left: auto;
+}
+
+.enableBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--foreground-bright);
+  background: var(--accent);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.enableBtn:hover {
+  background: var(--accent-hover);
+}
+
+/* Sessions Sync status */
+.syncStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0 2px 26px;
+}
+
+.syncIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.syncLabel {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.syncBar {
+  display: flex;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  gap: 1px;
+}
+
+.syncBarCloud {
+  background: var(--accent);
+  border-radius: 2px 0 0 2px;
+  transition: width 0.3s ease;
+}
+
+.syncBarLocal {
+  background: var(--muted);
+  border-radius: 0 2px 2px 0;
+  opacity: 0.5;
+  transition: width 0.3s ease;
+}
+
+.syncLegend {
+  display: flex;
+  gap: 12px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.legendDotCloud {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.legendDotLocal {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 0.5;
+}
+
+/* Status bar */
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  height: 36px;
+  padding: 0 12px;
+  background: var(--chrome);
+  border-top: 1px solid var(--border);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.statusIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.statusIcon:hover {
+  background: var(--hover);
+  color: var(--foreground);
+}
+
+.statusIconActive {
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+}
+
+.statusIconActive:hover {
+  background: var(--accent-hover);
+  color: white;
+}
+
+/* State toggle bar */
+.stateToggle {
+  position: fixed;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  z-index: 100;
+}
+
+.stateBtn {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.stateBtn:hover {
+  color: var(--foreground);
+  background: var(--hover);
+}
+
+.stateBtnActive {
+  color: var(--foreground-bright);
+  background: var(--hover);
+}
