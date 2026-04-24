@@ -8,17 +8,25 @@ import styles from "./page.module.css";
 /*  Data types                                                         */
 /* ------------------------------------------------------------------ */
 
-type ApprovalKind = "tool-pre" | "tool-post" | "server-pre" | "server-post" | "url";
 type ApprovalScope = "workspace" | "user";
+type ApprovalState = "allow" | "ask" | "deny";
+type SourceKind = "mcp" | "extension" | "builtin" | "url" | "path";
 
-interface ApprovalEntry {
+interface EntryApproval {
   id: string;
   label: string;
-  description: string;
-  kind: ApprovalKind;
-  scope: ApprovalScope;
+  state: ApprovalState;
+}
+
+interface SourceGroup {
+  id: string;
+  label: string;
+  kind: SourceKind;
   icon: string;
-  enabled: boolean;
+  scope: ApprovalScope;
+  totalTools?: number;
+  approvals: EntryApproval[];
+  bulkState: ApprovalState;
 }
 
 type SidebarSection =
@@ -35,107 +43,161 @@ type SidebarSection =
 /*  Mock data                                                          */
 /* ------------------------------------------------------------------ */
 
-const INITIAL_APPROVALS: ApprovalEntry[] = [
-  // Workspace
+const INITIAL_SOURCES: SourceGroup[] = [
+  // ── Workspace ──
   {
-    id: "ws-tool-github-search",
-    label: "github_text_search",
-    description: "Run without asking · GitHub MCP",
-    kind: "tool-pre",
-    scope: "workspace",
-    icon: "tools",
-    enabled: true,
-  },
-  {
-    id: "ws-tool-file-read",
-    label: "read_file",
-    description: "Run without asking · Built-in",
-    kind: "tool-pre",
-    scope: "workspace",
-    icon: "tools",
-    enabled: true,
-  },
-  {
-    id: "ws-tool-terminal",
-    label: "run_in_terminal",
-    description: "Continue without reviewing results · Built-in",
-    kind: "tool-post",
-    scope: "workspace",
-    icon: "terminal",
-    enabled: true,
-  },
-  {
-    id: "ws-server-perplexity",
-    label: "perplexity",
-    description: "Start server without asking · User MCP",
-    kind: "server-pre",
-    scope: "workspace",
+    id: "ws-github-mcp",
+    label: "GitHub MCP Server",
+    kind: "mcp",
     icon: "server",
-    enabled: true,
-  },
-  {
-    id: "ws-url-github",
-    label: "github.com/*",
-    description: "Fetch URL without asking",
-    kind: "url",
     scope: "workspace",
-    icon: "globe",
-    enabled: true,
+    totalTools: 42,
+    bulkState: "ask",
+    approvals: [
+      { id: "ws-gh-search", label: "github_text_search", state: "allow" },
+      { id: "ws-gh-issues", label: "list_issues", state: "allow" },
+      { id: "ws-gh-create-pr", label: "create_pull_request", state: "ask" },
+      { id: "ws-gh-merge", label: "merge_pull_request", state: "deny" },
+    ],
   },
   {
-    id: "ws-url-npm",
-    label: "registry.npmjs.org/*",
-    description: "Fetch URL without asking",
-    kind: "url",
-    scope: "workspace",
-    icon: "globe",
-    enabled: true,
-  },
-  // User
-  {
-    id: "user-tool-edit-file",
-    label: "replace_string_in_file",
-    description: "Run without asking · Built-in",
-    kind: "tool-pre",
-    scope: "user",
-    icon: "tools",
-    enabled: true,
-  },
-  {
-    id: "user-tool-search",
-    label: "semantic_search",
-    description: "Run without asking · Built-in",
-    kind: "tool-pre",
-    scope: "user",
-    icon: "search",
-    enabled: true,
-  },
-  {
-    id: "user-server-excalidraw",
-    label: "excalidraw",
-    description: "Start server without asking · User MCP",
-    kind: "server-pre",
-    scope: "user",
+    id: "ws-perplexity",
+    label: "Perplexity AI",
+    kind: "mcp",
     icon: "server",
-    enabled: true,
+    scope: "workspace",
+    totalTools: 4,
+    bulkState: "allow",
+    approvals: [],
   },
   {
-    id: "user-tool-browser",
-    label: "open_browser_page",
-    description: "Continue without reviewing results · Browser Tools",
-    kind: "tool-post",
+    id: "ws-workiq",
+    label: "WorkIQ",
+    kind: "mcp",
+    icon: "server",
+    scope: "workspace",
+    totalTools: 2,
+    bulkState: "ask",
+    approvals: [
+      { id: "ws-wiq-eula", label: "accept_eula", state: "allow" },
+    ],
+  },
+  {
+    id: "ws-pylance",
+    label: "Pylance Language Server",
+    kind: "extension",
+    icon: "extensions",
+    scope: "workspace",
+    totalTools: 12,
+    bulkState: "ask",
+    approvals: [
+      { id: "ws-py-diag", label: "pylanceDiagnostics", state: "allow" },
+      { id: "ws-py-hover", label: "pylanceHover", state: "allow" },
+    ],
+  },
+  {
+    id: "ws-builtin",
+    label: "Built-in Tools",
+    kind: "builtin",
+    icon: "tools",
+    scope: "workspace",
+    totalTools: 18,
+    bulkState: "ask",
+    approvals: [
+      { id: "ws-bi-terminal", label: "run_in_terminal", state: "ask" },
+      { id: "ws-bi-readfile", label: "read_file", state: "allow" },
+      { id: "ws-bi-edit", label: "replace_string_in_file", state: "ask" },
+      { id: "ws-bi-task", label: "run_task", state: "deny" },
+    ],
+  },
+  {
+    id: "ws-urls",
+    label: "Allowed URLs",
+    kind: "url",
+    icon: "globe",
+    scope: "workspace",
+    bulkState: "ask",
+    approvals: [
+      { id: "ws-url-vscode", label: "code.visualstudio.com/*", state: "allow" },
+      { id: "ws-url-gh-wiki", label: "github.com/microsoft/vscode/wiki/*", state: "allow" },
+      { id: "ws-url-gh", label: "github.com/*", state: "ask" },
+      { id: "ws-url-npm", label: "registry.npmjs.org/*", state: "allow" },
+      { id: "ws-url-supabase", label: "supabase.com/docs/*", state: "allow" },
+    ],
+  },
+  {
+    id: "ws-paths",
+    label: "Folder Access",
+    kind: "path",
+    icon: "folder",
+    scope: "workspace",
+    bulkState: "ask",
+    approvals: [
+      { id: "ws-path-src", label: "./src", state: "allow" },
+      { id: "ws-path-tests", label: "./tests", state: "allow" },
+      { id: "ws-path-node", label: "./node_modules", state: "deny" },
+    ],
+  },
+  // ── User ──
+  {
+    id: "user-excalidraw",
+    label: "Excalidraw",
+    kind: "mcp",
+    icon: "server",
     scope: "user",
+    totalTools: 6,
+    bulkState: "allow",
+    approvals: [],
+  },
+  {
+    id: "user-browser",
+    label: "Browser Tools",
+    kind: "extension",
     icon: "browser",
-    enabled: false,
+    scope: "user",
+    totalTools: 8,
+    bulkState: "ask",
+    approvals: [
+      { id: "user-br-open", label: "open_browser_page", state: "allow" },
+      { id: "user-br-click", label: "click_element", state: "ask" },
+      { id: "user-br-nav", label: "navigate_page", state: "allow" },
+    ],
   },
   {
-    id: "user-url-stackoverflow",
-    label: "stackoverflow.com/*",
-    description: "Fetch URL without asking",
-    kind: "url",
+    id: "user-builtin",
+    label: "Built-in Tools",
+    kind: "builtin",
+    icon: "tools",
     scope: "user",
+    totalTools: 18,
+    bulkState: "ask",
+    approvals: [
+      { id: "user-bi-edit", label: "replace_string_in_file", state: "ask" },
+      { id: "user-bi-search", label: "semantic_search", state: "allow" },
+    ],
+  },
+  {
+    id: "user-urls",
+    label: "Allowed URLs",
+    kind: "url",
     icon: "globe",
-    enabled: true,
+    scope: "user",
+    bulkState: "ask",
+    approvals: [
+      { id: "user-url-so", label: "stackoverflow.com/*", state: "allow" },
+      { id: "user-url-mdn", label: "developer.mozilla.org/*", state: "allow" },
+    ],
+  },
+  {
+    id: "user-paths",
+    label: "Folder Access",
+    kind: "path",
+    icon: "folder",
+    scope: "user",
+    bulkState: "ask",
+    approvals: [
+      { id: "user-path-home", label: "~/Documents", state: "allow" },
+    ],
   },
 ];
 
@@ -150,64 +212,132 @@ const SIDEBAR_ITEMS: { id: SidebarSection; label: string; icon: string; count: n
   { id: "approvals", label: "Approvals", icon: "shield", count: 0 },
 ];
 
-const KIND_LABELS: Record<ApprovalKind, string> = {
-  "tool-pre": "Tool — Pre-execution",
-  "tool-post": "Tool — Post-execution",
-  "server-pre": "Server — Pre-start",
-  "server-post": "Server — Post-start",
-  url: "URL — Auto-fetch",
+const STATE_CYCLE: ApprovalState[] = ["allow", "ask", "deny"];
+
+function nextState(s: ApprovalState): ApprovalState {
+  return STATE_CYCLE[(STATE_CYCLE.indexOf(s) + 1) % STATE_CYCLE.length];
+}
+
+const STATE_LABELS: Record<ApprovalState, string> = {
+  allow: "Allow",
+  ask: "Ask",
+  deny: "Deny",
+};
+
+const STATE_ICONS: Record<ApprovalState, string> = {
+  allow: "pass-filled",
+  ask: "question",
+  deny: "circle-slash",
 };
 
 /* ------------------------------------------------------------------ */
 /*  Components                                                         */
 /* ------------------------------------------------------------------ */
 
-function ApprovalRow({
-  entry,
-  onToggle,
-  onRemove,
+function StateToggle({
+  state,
+  onChange,
+  compact,
 }: {
-  entry: ApprovalEntry;
-  onToggle: (id: string) => void;
-  onRemove: (id: string) => void;
+  state: ApprovalState;
+  onChange: (next: ApprovalState) => void;
+  compact?: boolean;
 }) {
   return (
-    <div className={styles.approvalRow}>
-      <button
-        className={styles.checkbox}
-        onClick={() => onToggle(entry.id)}
-        aria-label={entry.enabled ? "Disable approval" : "Enable approval"}
-      >
-        {entry.enabled && <Codicon name="check" />}
-      </button>
+    <button
+      className={`${styles.stateToggle} ${styles[`state_${state}`]} ${compact ? styles.stateCompact : ""}`}
+      onClick={(e) => { e.stopPropagation(); onChange(nextState(state)); }}
+      title={`${STATE_LABELS[state]} — click to change`}
+      aria-label={STATE_LABELS[state]}
+    >
+      <Codicon name={STATE_ICONS[state]} style={{ fontSize: 12 }} />
+      {!compact && <span>{STATE_LABELS[state]}</span>}
+    </button>
+  );
+}
+
+function SourceHeader({
+  source,
+  expanded,
+  onToggle,
+  onBulkChange,
+  onAdd,
+}: {
+  source: SourceGroup;
+  expanded: boolean;
+  onToggle: () => void;
+  onBulkChange: (state: ApprovalState) => void;
+  onAdd: () => void;
+}) {
+  const approvedCount = source.approvals.filter((a) => a.state === "allow").length;
+  const totalCount = source.approvals.length;
+
+  let summary: string;
+  if (source.bulkState === "allow") {
+    summary = source.totalTools
+      ? `All ${source.totalTools} tools allowed`
+      : "All allowed";
+  } else if (totalCount > 0) {
+    summary = source.totalTools
+      ? `${approvedCount} allowed, ${totalCount} configured of ${source.totalTools}`
+      : `${approvedCount} allowed of ${totalCount}`;
+  } else {
+    summary = source.totalTools
+      ? `${source.totalTools} tools available`
+      : "No rules yet";
+  }
+
+  return (
+    <div className={styles.sourceHeader} onClick={onToggle}>
       <Codicon
-        name={entry.icon}
-        style={{ color: "var(--muted)", fontSize: 16, flexShrink: 0 }}
+        name={expanded ? "chevron-down" : "chevron-right"}
+        style={{ color: "var(--muted)", fontSize: 14, flexShrink: 0 }}
       />
-      <div className={styles.approvalInfo}>
-        <span className={`${styles.approvalLabel} ${!entry.enabled ? styles.approvalDisabled : ""}`}>
-          {entry.label}
-        </span>
-        <span className={styles.approvalDesc}>{entry.description}</span>
-      </div>
-      <span className={styles.kindBadge}>{KIND_LABELS[entry.kind]}</span>
+      <Codicon
+        name={source.icon}
+        style={{ color: "var(--foreground)", fontSize: 16, flexShrink: 0 }}
+      />
+      <span className={styles.sourceLabel}>{source.label}</span>
+      <span className={styles.sourceSummary}>{summary}</span>
       <button
-        className={styles.removeBtn}
-        onClick={() => onRemove(entry.id)}
-        aria-label="Remove approval"
+        className={styles.sourceAddBtn}
+        onClick={(e) => { e.stopPropagation(); onAdd(); }}
+        title={`Add to ${source.label}`}
+        aria-label={`Add to ${source.label}`}
       >
-        <Codicon name="trash" />
+        <Codicon name="add" style={{ fontSize: 14 }} />
+      </button>
+      <StateToggle state={source.bulkState} onChange={onBulkChange} compact />
+    </div>
+  );
+}
+
+function EntryRow({
+  entry,
+  onStateChange,
+  onRemove,
+}: {
+  entry: EntryApproval;
+  onStateChange: (state: ApprovalState) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className={styles.entryRow}>
+      <span className={styles.entryLabel}>{entry.label}</span>
+      <StateToggle state={entry.state} onChange={onStateChange} />
+      <button className={styles.removeBtn} onClick={onRemove} aria-label="Remove">
+        <Codicon name="trash" style={{ fontSize: 14 }} />
       </button>
     </div>
   );
 }
 
-function GroupHeader({ label, count }: { label: string; count: number }) {
+function ScopeGroup({ label, count }: { label: string; count: number }) {
   return (
-    <div className={styles.groupHeader}>
+    <div className={styles.scopeHeader}>
       <Codicon name="chevron-down" style={{ color: "var(--muted)", fontSize: 14 }} />
-      <span className={styles.groupLabel}>{label}</span>
-      <span className={styles.groupCount}>{count}</span>
+      <span className={styles.scopeLabel}>{label}</span>
+      <span className={styles.scopeCount}>{count}</span>
     </div>
   );
 }
@@ -218,41 +348,113 @@ function GroupHeader({ label, count }: { label: string; count: number }) {
 
 export default function ApprovalsSectionPage() {
   const [activeSection, setActiveSection] = useState<SidebarSection>("approvals");
-  const [approvals, setApprovals] = useState<ApprovalEntry[]>(INITIAL_APPROVALS);
+  const [sources, setSources] = useState<SourceGroup[]>(INITIAL_SOURCES);
+  const [expandedSources, setExpandedSources] = useState<Set<string>>(
+    () => new Set(["ws-github-mcp", "ws-urls", "ws-builtin", "user-browser"])
+  );
   const [searchQuery, setSearchQuery] = useState("");
 
-  const toggle = useCallback((id: string) => {
-    setApprovals((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, enabled: !a.enabled } : a))
+  const toggleExpanded = useCallback((id: string) => {
+    setExpandedSources((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const changeBulkState = useCallback((sourceId: string, state: ApprovalState) => {
+    setSources((prev) =>
+      prev.map((s) => (s.id === sourceId ? { ...s, bulkState: state } : s))
     );
   }, []);
 
-  const remove = useCallback((id: string) => {
-    setApprovals((prev) => prev.filter((a) => a.id !== id));
+  const changeEntryState = useCallback(
+    (sourceId: string, entryId: string, state: ApprovalState) => {
+      setSources((prev) =>
+        prev.map((s) =>
+          s.id === sourceId
+            ? {
+                ...s,
+                approvals: s.approvals.map((a) =>
+                  a.id === entryId ? { ...a, state } : a
+                ),
+              }
+            : s
+        )
+      );
+    },
+    []
+  );
+
+  const removeEntry = useCallback((sourceId: string, entryId: string) => {
+    setSources((prev) =>
+      prev.map((s) =>
+        s.id === sourceId
+          ? { ...s, approvals: s.approvals.filter((a) => a.id !== entryId) }
+          : s
+      )
+    );
   }, []);
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return approvals;
+    if (!searchQuery.trim()) return sources;
     const q = searchQuery.toLowerCase();
-    return approvals.filter(
-      (a) =>
-        a.label.toLowerCase().includes(q) ||
-        a.description.toLowerCase().includes(q) ||
-        KIND_LABELS[a.kind].toLowerCase().includes(q)
-    );
-  }, [approvals, searchQuery]);
+    return sources
+      .map((s) => ({
+        ...s,
+        approvals: s.approvals.filter((a) => a.label.toLowerCase().includes(q)),
+      }))
+      .filter((s) => s.label.toLowerCase().includes(q) || s.approvals.length > 0);
+  }, [sources, searchQuery]);
 
-  const workspaceItems = filtered.filter((a) => a.scope === "workspace");
-  const userItems = filtered.filter((a) => a.scope === "user");
+  const workspaceSources = filtered.filter((s) => s.scope === "workspace");
+  const userSources = filtered.filter((s) => s.scope === "user");
 
-  // Update the sidebar count for approvals
+  const totalApprovals = sources.reduce((n, s) => n + s.approvals.length + 1, 0);
+
   const sidebarItems = useMemo(
     () =>
       SIDEBAR_ITEMS.map((s) =>
-        s.id === "approvals" ? { ...s, count: approvals.length } : s
+        s.id === "approvals" ? { ...s, count: totalApprovals } : s
       ),
-    [approvals]
+    [totalApprovals]
   );
+
+  const renderSources = (items: SourceGroup[]) =>
+    items.map((source) => {
+      const isExpanded = expandedSources.has(source.id);
+      return (
+        <div key={source.id} className={styles.sourceGroup}>
+          <SourceHeader
+            source={source}
+            expanded={isExpanded}
+            onToggle={() => toggleExpanded(source.id)}
+            onBulkChange={(state) => changeBulkState(source.id, state)}
+            onAdd={() => {}}
+          />
+          {isExpanded && source.approvals.length > 0 && (
+            <div className={styles.sourceEntries}>
+              {source.approvals.map((entry) => (
+                <EntryRow
+                  key={entry.id}
+                  entry={entry}
+                  onStateChange={(state) => changeEntryState(source.id, entry.id, state)}
+                  onRemove={() => removeEntry(source.id, entry.id)}
+                />
+              ))}
+            </div>
+          )}
+          {isExpanded && source.approvals.length === 0 && (
+            <div className={styles.sourceEmpty}>
+              {source.bulkState === "allow"
+                ? "All tools allowed at source level"
+                : "No individual rules configured"}
+            </div>
+          )}
+        </div>
+      );
+    });
 
   return (
     <div className={styles.scene}>
@@ -304,7 +506,6 @@ export default function ApprovalsSectionPage() {
         <div className={styles.content}>
           {activeSection === "approvals" ? (
             <>
-              {/* Content header with search */}
               <div className={styles.contentHeader}>
                 <button className={styles.backBtn} onClick={() => setActiveSection("agents")}>
                   <Codicon name="arrow-left" />
@@ -314,7 +515,7 @@ export default function ApprovalsSectionPage() {
                   <input
                     type="text"
                     className={styles.searchInput}
-                    placeholder="Type to search..."
+                    placeholder="Filter approvals..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -328,9 +529,14 @@ export default function ApprovalsSectionPage() {
                     </button>
                   )}
                 </div>
+                <div className={styles.headerActions}>
+                  <button className={styles.actionBtn} title="Add tool rule">
+                    <Codicon name="add" style={{ fontSize: 14 }} />
+                    <span>Add Rule</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Approvals list */}
               <div className={styles.listArea}>
                 {filtered.length === 0 ? (
                   <div className={styles.emptyState}>
@@ -339,53 +545,37 @@ export default function ApprovalsSectionPage() {
                     <span className={styles.emptyDesc}>
                       {searchQuery
                         ? "No approvals match your search."
-                        : "Tool, server, and URL approvals will appear here once configured."}
+                        : "Tool, server, URL, and path approvals will appear here once configured."}
                     </span>
                   </div>
                 ) : (
                   <>
-                    {workspaceItems.length > 0 && (
+                    {workspaceSources.length > 0 && (
                       <>
-                        <GroupHeader label="Workspace" count={workspaceItems.length} />
-                        {workspaceItems.map((entry) => (
-                          <ApprovalRow
-                            key={entry.id}
-                            entry={entry}
-                            onToggle={toggle}
-                            onRemove={remove}
-                          />
-                        ))}
+                        <ScopeGroup label="Workspace" count={workspaceSources.length} />
+                        {renderSources(workspaceSources)}
                       </>
                     )}
-                    {userItems.length > 0 && (
+                    {userSources.length > 0 && (
                       <>
-                        <GroupHeader label="User" count={userItems.length} />
-                        {userItems.map((entry) => (
-                          <ApprovalRow
-                            key={entry.id}
-                            entry={entry}
-                            onToggle={toggle}
-                            onRemove={remove}
-                          />
-                        ))}
+                        <ScopeGroup label="User" count={userSources.length} />
+                        {renderSources(userSources)}
                       </>
                     )}
                   </>
                 )}
               </div>
 
-              {/* Footer */}
               <div className={styles.footer}>
                 <span className={styles.footerText}>
-                  Manage tool execution permissions — which tools and servers can run without asking.
+                  Manage which tools, servers, URLs, and paths can run without confirmation.
                 </span>
                 <a className={styles.footerLink} href="#">
-                  Learn more about approvals
+                  Learn more
                 </a>
               </div>
             </>
           ) : (
-            /* Placeholder for other sections */
             <div className={styles.otherSection}>
               <Codicon
                 name={sidebarItems.find((s) => s.id === activeSection)?.icon || "info"}
