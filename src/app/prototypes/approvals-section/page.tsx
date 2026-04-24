@@ -9,13 +9,12 @@ import styles from "./page.module.css";
 /* ------------------------------------------------------------------ */
 
 type ApprovalScope = "workspace" | "user";
-type ApprovalState = "allow" | "ask" | "deny";
 type SourceKind = "mcp" | "extension" | "builtin" | "url" | "path";
 
 interface EntryApproval {
   id: string;
   label: string;
-  state: ApprovalState;
+  allowed: boolean; // true = auto-approve, false = always deny
 }
 
 interface SourceGroup {
@@ -26,7 +25,7 @@ interface SourceGroup {
   scope: ApprovalScope;
   totalTools?: number;
   approvals: EntryApproval[];
-  bulkState: ApprovalState;
+  allowAll: boolean; // source-level bulk allow
 }
 
 type SidebarSection =
@@ -52,12 +51,12 @@ const INITIAL_SOURCES: SourceGroup[] = [
     icon: "server",
     scope: "workspace",
     totalTools: 42,
-    bulkState: "ask",
+    allowAll: false,
     approvals: [
-      { id: "ws-gh-search", label: "github_text_search", state: "allow" },
-      { id: "ws-gh-issues", label: "list_issues", state: "allow" },
-      { id: "ws-gh-create-pr", label: "create_pull_request", state: "ask" },
-      { id: "ws-gh-merge", label: "merge_pull_request", state: "deny" },
+      { id: "ws-gh-search", label: "github_text_search", allowed: true },
+      { id: "ws-gh-issues", label: "list_issues", allowed: true },
+      { id: "ws-gh-create-pr", label: "create_pull_request", allowed: true },
+      { id: "ws-gh-merge", label: "merge_pull_request", allowed: false },
     ],
   },
   {
@@ -67,7 +66,7 @@ const INITIAL_SOURCES: SourceGroup[] = [
     icon: "server",
     scope: "workspace",
     totalTools: 4,
-    bulkState: "allow",
+    allowAll: true,
     approvals: [],
   },
   {
@@ -77,9 +76,9 @@ const INITIAL_SOURCES: SourceGroup[] = [
     icon: "server",
     scope: "workspace",
     totalTools: 2,
-    bulkState: "ask",
+    allowAll: false,
     approvals: [
-      { id: "ws-wiq-eula", label: "accept_eula", state: "allow" },
+      { id: "ws-wiq-eula", label: "accept_eula", allowed: true },
     ],
   },
   {
@@ -89,10 +88,10 @@ const INITIAL_SOURCES: SourceGroup[] = [
     icon: "extensions",
     scope: "workspace",
     totalTools: 12,
-    bulkState: "ask",
+    allowAll: false,
     approvals: [
-      { id: "ws-py-diag", label: "pylanceDiagnostics", state: "allow" },
-      { id: "ws-py-hover", label: "pylanceHover", state: "allow" },
+      { id: "ws-py-diag", label: "pylanceDiagnostics", allowed: true },
+      { id: "ws-py-hover", label: "pylanceHover", allowed: true },
     ],
   },
   {
@@ -102,12 +101,12 @@ const INITIAL_SOURCES: SourceGroup[] = [
     icon: "tools",
     scope: "workspace",
     totalTools: 18,
-    bulkState: "ask",
+    allowAll: false,
     approvals: [
-      { id: "ws-bi-terminal", label: "run_in_terminal", state: "ask" },
-      { id: "ws-bi-readfile", label: "read_file", state: "allow" },
-      { id: "ws-bi-edit", label: "replace_string_in_file", state: "ask" },
-      { id: "ws-bi-task", label: "run_task", state: "deny" },
+      { id: "ws-bi-terminal", label: "run_in_terminal", allowed: false },
+      { id: "ws-bi-readfile", label: "read_file", allowed: true },
+      { id: "ws-bi-edit", label: "replace_string_in_file", allowed: true },
+      { id: "ws-bi-task", label: "run_task", allowed: false },
     ],
   },
   {
@@ -116,13 +115,13 @@ const INITIAL_SOURCES: SourceGroup[] = [
     kind: "url",
     icon: "globe",
     scope: "workspace",
-    bulkState: "ask",
+    allowAll: false,
     approvals: [
-      { id: "ws-url-vscode", label: "code.visualstudio.com/*", state: "allow" },
-      { id: "ws-url-gh-wiki", label: "github.com/microsoft/vscode/wiki/*", state: "allow" },
-      { id: "ws-url-gh", label: "github.com/*", state: "ask" },
-      { id: "ws-url-npm", label: "registry.npmjs.org/*", state: "allow" },
-      { id: "ws-url-supabase", label: "supabase.com/docs/*", state: "allow" },
+      { id: "ws-url-vscode", label: "code.visualstudio.com/*", allowed: true },
+      { id: "ws-url-gh-wiki", label: "github.com/microsoft/vscode/wiki/*", allowed: true },
+      { id: "ws-url-gh", label: "github.com/*", allowed: true },
+      { id: "ws-url-npm", label: "registry.npmjs.org/*", allowed: true },
+      { id: "ws-url-supabase", label: "supabase.com/docs/*", allowed: false },
     ],
   },
   {
@@ -131,11 +130,11 @@ const INITIAL_SOURCES: SourceGroup[] = [
     kind: "path",
     icon: "folder",
     scope: "workspace",
-    bulkState: "ask",
+    allowAll: false,
     approvals: [
-      { id: "ws-path-src", label: "./src", state: "allow" },
-      { id: "ws-path-tests", label: "./tests", state: "allow" },
-      { id: "ws-path-node", label: "./node_modules", state: "deny" },
+      { id: "ws-path-src", label: "./src", allowed: true },
+      { id: "ws-path-tests", label: "./tests", allowed: true },
+      { id: "ws-path-node", label: "./node_modules", allowed: false },
     ],
   },
   // ── User ──
@@ -146,7 +145,7 @@ const INITIAL_SOURCES: SourceGroup[] = [
     icon: "server",
     scope: "user",
     totalTools: 6,
-    bulkState: "allow",
+    allowAll: true,
     approvals: [],
   },
   {
@@ -156,11 +155,11 @@ const INITIAL_SOURCES: SourceGroup[] = [
     icon: "browser",
     scope: "user",
     totalTools: 8,
-    bulkState: "ask",
+    allowAll: false,
     approvals: [
-      { id: "user-br-open", label: "open_browser_page", state: "allow" },
-      { id: "user-br-click", label: "click_element", state: "ask" },
-      { id: "user-br-nav", label: "navigate_page", state: "allow" },
+      { id: "user-br-open", label: "open_browser_page", allowed: true },
+      { id: "user-br-click", label: "click_element", allowed: true },
+      { id: "user-br-nav", label: "navigate_page", allowed: true },
     ],
   },
   {
@@ -170,10 +169,10 @@ const INITIAL_SOURCES: SourceGroup[] = [
     icon: "tools",
     scope: "user",
     totalTools: 18,
-    bulkState: "ask",
+    allowAll: false,
     approvals: [
-      { id: "user-bi-edit", label: "replace_string_in_file", state: "ask" },
-      { id: "user-bi-search", label: "semantic_search", state: "allow" },
+      { id: "user-bi-edit", label: "replace_string_in_file", allowed: true },
+      { id: "user-bi-search", label: "semantic_search", allowed: true },
     ],
   },
   {
@@ -182,10 +181,10 @@ const INITIAL_SOURCES: SourceGroup[] = [
     kind: "url",
     icon: "globe",
     scope: "user",
-    bulkState: "ask",
+    allowAll: false,
     approvals: [
-      { id: "user-url-so", label: "stackoverflow.com/*", state: "allow" },
-      { id: "user-url-mdn", label: "developer.mozilla.org/*", state: "allow" },
+      { id: "user-url-so", label: "stackoverflow.com/*", allowed: true },
+      { id: "user-url-mdn", label: "developer.mozilla.org/*", allowed: true },
     ],
   },
   {
@@ -194,9 +193,9 @@ const INITIAL_SOURCES: SourceGroup[] = [
     kind: "path",
     icon: "folder",
     scope: "user",
-    bulkState: "ask",
+    allowAll: false,
     approvals: [
-      { id: "user-path-home", label: "~/Documents", state: "allow" },
+      { id: "user-path-home", label: "~/Documents", allowed: true },
     ],
   },
 ];
@@ -212,46 +211,28 @@ const SIDEBAR_ITEMS: { id: SidebarSection; label: string; icon: string; count: n
   { id: "approvals", label: "Approvals", icon: "shield", count: 0 },
 ];
 
-const STATE_CYCLE: ApprovalState[] = ["allow", "ask", "deny"];
-
-function nextState(s: ApprovalState): ApprovalState {
-  return STATE_CYCLE[(STATE_CYCLE.indexOf(s) + 1) % STATE_CYCLE.length];
-}
-
-const STATE_LABELS: Record<ApprovalState, string> = {
-  allow: "Allow",
-  ask: "Ask",
-  deny: "Deny",
-};
-
-const STATE_ICONS: Record<ApprovalState, string> = {
-  allow: "pass-filled",
-  ask: "question",
-  deny: "circle-slash",
-};
-
 /* ------------------------------------------------------------------ */
 /*  Components                                                         */
 /* ------------------------------------------------------------------ */
 
-function StateToggle({
-  state,
-  onChange,
-  compact,
+function AllowIcon({
+  allowed,
+  onClick,
 }: {
-  state: ApprovalState;
-  onChange: (next: ApprovalState) => void;
-  compact?: boolean;
+  allowed: boolean;
+  onClick: () => void;
 }) {
   return (
     <button
-      className={`${styles.stateToggle} ${styles[`state_${state}`]} ${compact ? styles.stateCompact : ""}`}
-      onClick={(e) => { e.stopPropagation(); onChange(nextState(state)); }}
-      title={`${STATE_LABELS[state]} — click to change`}
-      aria-label={STATE_LABELS[state]}
+      className={`${styles.allowIcon} ${allowed ? styles.allowIconOn : styles.allowIconOff}`}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      title={allowed ? "Allowed — click to deny" : "Denied — click to allow"}
+      aria-label={allowed ? "Allowed" : "Denied"}
     >
-      <Codicon name={STATE_ICONS[state]} style={{ fontSize: 12 }} />
-      {!compact && <span>{STATE_LABELS[state]}</span>}
+      <Codicon
+        name={allowed ? "pass-filled" : "circle-slash"}
+        style={{ fontSize: 14 }}
+      />
     </button>
   );
 }
@@ -260,31 +241,35 @@ function SourceHeader({
   source,
   expanded,
   onToggle,
-  onBulkChange,
+  onAllowAll,
   onAdd,
 }: {
   source: SourceGroup;
   expanded: boolean;
   onToggle: () => void;
-  onBulkChange: (state: ApprovalState) => void;
+  onAllowAll: () => void;
   onAdd: () => void;
 }) {
-  const approvedCount = source.approvals.filter((a) => a.state === "allow").length;
+  const allowedCount = source.approvals.filter((a) => a.allowed).length;
   const totalCount = source.approvals.length;
+  const hasTools = source.kind === "mcp" || source.kind === "extension" || source.kind === "builtin";
 
   let summary: string;
-  if (source.bulkState === "allow") {
+  if (source.allowAll) {
     summary = source.totalTools
-      ? `All ${source.totalTools} tools allowed`
+      ? `All ${source.totalTools} tools`
       : "All allowed";
   } else if (totalCount > 0) {
-    summary = source.totalTools
-      ? `${approvedCount} allowed, ${totalCount} configured of ${source.totalTools}`
-      : `${approvedCount} allowed of ${totalCount}`;
+    const denied = totalCount - allowedCount;
+    const parts: string[] = [];
+    if (allowedCount > 0) parts.push(`${allowedCount} allowed`);
+    if (denied > 0) parts.push(`${denied} denied`);
+    if (source.totalTools) parts.push(`of ${source.totalTools}`);
+    summary = parts.join(", ");
   } else {
     summary = source.totalTools
-      ? `${source.totalTools} tools available`
-      : "No rules yet";
+      ? `${source.totalTools} tools`
+      : "No rules";
   }
 
   return (
@@ -298,6 +283,11 @@ function SourceHeader({
         style={{ color: "var(--foreground)", fontSize: 16, flexShrink: 0 }}
       />
       <span className={styles.sourceLabel}>{source.label}</span>
+      {source.allowAll && (
+        <span className={styles.allowAllBadge}>
+          <Codicon name="pass-filled" style={{ fontSize: 12 }} />
+        </span>
+      )}
       <span className={styles.sourceSummary}>{summary}</span>
       <button
         className={styles.sourceAddBtn}
@@ -307,24 +297,33 @@ function SourceHeader({
       >
         <Codicon name="add" style={{ fontSize: 14 }} />
       </button>
-      <StateToggle state={source.bulkState} onChange={onBulkChange} compact />
+      {hasTools && (
+        <button
+          className={`${styles.allowAllBtn} ${source.allowAll ? styles.allowAllBtnActive : ""}`}
+          onClick={(e) => { e.stopPropagation(); onAllowAll(); }}
+          title={source.allowAll ? "Revoke allow-all" : "Allow all tools"}
+        >
+          <Codicon name={source.allowAll ? "pass-filled" : "pass"} style={{ fontSize: 12 }} />
+          <span>{source.allowAll ? "All Allowed" : "Allow All"}</span>
+        </button>
+      )}
     </div>
   );
 }
 
 function EntryRow({
   entry,
-  onStateChange,
+  onToggle,
   onRemove,
 }: {
   entry: EntryApproval;
-  onStateChange: (state: ApprovalState) => void;
+  onToggle: () => void;
   onRemove: () => void;
 }) {
   return (
     <div className={styles.entryRow}>
+      <AllowIcon allowed={entry.allowed} onClick={onToggle} />
       <span className={styles.entryLabel}>{entry.label}</span>
-      <StateToggle state={entry.state} onChange={onStateChange} />
       <button className={styles.removeBtn} onClick={onRemove} aria-label="Remove">
         <Codicon name="trash" style={{ fontSize: 14 }} />
       </button>
@@ -363,29 +362,26 @@ export default function ApprovalsSectionPage() {
     });
   }, []);
 
-  const changeBulkState = useCallback((sourceId: string, state: ApprovalState) => {
+  const toggleAllowAll = useCallback((sourceId: string) => {
     setSources((prev) =>
-      prev.map((s) => (s.id === sourceId ? { ...s, bulkState: state } : s))
+      prev.map((s) => (s.id === sourceId ? { ...s, allowAll: !s.allowAll } : s))
     );
   }, []);
 
-  const changeEntryState = useCallback(
-    (sourceId: string, entryId: string, state: ApprovalState) => {
-      setSources((prev) =>
-        prev.map((s) =>
-          s.id === sourceId
-            ? {
-                ...s,
-                approvals: s.approvals.map((a) =>
-                  a.id === entryId ? { ...a, state } : a
-                ),
-              }
-            : s
-        )
-      );
-    },
-    []
-  );
+  const toggleEntry = useCallback((sourceId: string, entryId: string) => {
+    setSources((prev) =>
+      prev.map((s) =>
+        s.id === sourceId
+          ? {
+              ...s,
+              approvals: s.approvals.map((a) =>
+                a.id === entryId ? { ...a, allowed: !a.allowed } : a
+              ),
+            }
+          : s
+      )
+    );
+  }, []);
 
   const removeEntry = useCallback((sourceId: string, entryId: string) => {
     setSources((prev) =>
@@ -411,7 +407,7 @@ export default function ApprovalsSectionPage() {
   const workspaceSources = filtered.filter((s) => s.scope === "workspace");
   const userSources = filtered.filter((s) => s.scope === "user");
 
-  const totalApprovals = sources.reduce((n, s) => n + s.approvals.length + 1, 0);
+  const totalApprovals = sources.reduce((n, s) => n + s.approvals.length + (s.allowAll ? 1 : 0), 0);
 
   const sidebarItems = useMemo(
     () =>
@@ -430,7 +426,7 @@ export default function ApprovalsSectionPage() {
             source={source}
             expanded={isExpanded}
             onToggle={() => toggleExpanded(source.id)}
-            onBulkChange={(state) => changeBulkState(source.id, state)}
+            onAllowAll={() => toggleAllowAll(source.id)}
             onAdd={() => {}}
           />
           {isExpanded && source.approvals.length > 0 && (
@@ -439,7 +435,7 @@ export default function ApprovalsSectionPage() {
                 <EntryRow
                   key={entry.id}
                   entry={entry}
-                  onStateChange={(state) => changeEntryState(source.id, entry.id, state)}
+                  onToggle={() => toggleEntry(source.id, entry.id)}
                   onRemove={() => removeEntry(source.id, entry.id)}
                 />
               ))}
@@ -447,8 +443,8 @@ export default function ApprovalsSectionPage() {
           )}
           {isExpanded && source.approvals.length === 0 && (
             <div className={styles.sourceEmpty}>
-              {source.bulkState === "allow"
-                ? "All tools allowed at source level"
+              {source.allowAll
+                ? "All tools run without approval"
                 : "No individual rules configured"}
             </div>
           )}
@@ -530,7 +526,7 @@ export default function ApprovalsSectionPage() {
                   )}
                 </div>
                 <div className={styles.headerActions}>
-                  <button className={styles.actionBtn} title="Add tool rule">
+                  <button className={styles.actionBtn} title="Add approval rule">
                     <Codicon name="add" style={{ fontSize: 14 }} />
                     <span>Add Rule</span>
                   </button>

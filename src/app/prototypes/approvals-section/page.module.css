@@ -371,9 +371,9 @@
 .entryRow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 16px 4px 64px;
-  min-height: 30px;
+  gap: 6px;
+  padding: 3px 16px 3px 52px;
+  min-height: 28px;
   cursor: default;
 }
 
@@ -397,38 +397,61 @@
 }
 
 /* ------------------------------------------------------------------ */
-/*  Mode tag (clickable label: "without approval" / "Approve all" etc) */
+/*  Allow icon (status indicator on left of entry)                     */
 /* ------------------------------------------------------------------ */
 
-.modeTag {
-  font-size: 0.6875rem;
-  color: var(--muted);
+.allowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
   background: none;
   border: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
   padding: 0;
-  cursor: default;
-  font-family: inherit;
-  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.12s;
+}
+
+.allowIconOn {
+  color: var(--success);
+}
+
+.allowIconOn:hover {
+  color: color-mix(in srgb, var(--success) 70%, white);
+}
+
+.allowIconOff {
+  color: var(--error);
+  opacity: 0.7;
+}
+
+.allowIconOff:hover {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Allow-all badge (inline in source header)                          */
+/* ------------------------------------------------------------------ */
+
+.allowAllBadge {
+  color: var(--success);
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
 }
 
-.modeClickable {
-  cursor: pointer;
-}
-
-.modeClickable:hover {
-  color: var(--foreground);
-}
-
 /* ------------------------------------------------------------------ */
-/*  State toggle (tri-state: allow / default / deny)                   */
+/*  Allow-all button (source header action)                            */
 /* ------------------------------------------------------------------ */
 
-.stateToggle {
+.allowAllBtn {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 8px;
+  padding: 2px 8px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: none;
@@ -437,44 +460,25 @@
   font-family: inherit;
   white-space: nowrap;
   flex-shrink: 0;
+  color: var(--muted);
   transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 
-.stateCompact {
-  padding: 2px 5px;
+.allowAllBtn:hover {
+  background: var(--hover);
+  color: var(--foreground);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-.state_allow {
+.allowAllBtnActive {
   color: var(--success);
   border-color: color-mix(in srgb, var(--success) 30%, transparent);
   background: color-mix(in srgb, var(--success) 8%, transparent);
 }
 
-.state_allow:hover {
+.allowAllBtnActive:hover {
   background: color-mix(in srgb, var(--success) 15%, transparent);
   border-color: color-mix(in srgb, var(--success) 50%, transparent);
-}
-
-.state_ask {
-  color: var(--muted);
-  border-color: var(--border);
-  background: none;
-}
-
-.state_ask:hover {
-  background: var(--hover);
-  color: var(--foreground);
-}
-
-.state_deny {
-  color: var(--error);
-  border-color: color-mix(in srgb, var(--error) 30%, transparent);
-  background: color-mix(in srgb, var(--error) 8%, transparent);
-}
-
-.state_deny:hover {
-  background: color-mix(in srgb, var(--error) 15%, transparent);
-  border-color: color-mix(in srgb, var(--error) 50%, transparent);
 }
 
 /* Remove button */
