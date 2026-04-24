@@ -1,0 +1,443 @@
+/* ------------------------------------------------------------------ */
+/*  Scene / Chrome                                                     */
+/* ------------------------------------------------------------------ */
+
+.scene {
+  min-height: 100vh;
+  background: var(--background);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Title bar */
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  padding: 0 10px;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--muted);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.titleBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.titleBarActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.titleBarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 0;
+}
+
+.titleBarBtn:hover {
+  background: var(--hover);
+  color: var(--foreground);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Editor body                                                        */
+/* ------------------------------------------------------------------ */
+
+.editorBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sidebar                                                            */
+/* ------------------------------------------------------------------ */
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--chrome);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebarHeader {
+  padding: 12px 12px 8px;
+}
+
+.scopeSelector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--foreground);
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  background: var(--card);
+}
+
+.scopeSelector:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px 12px;
+  gap: 1px;
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  color: var(--foreground);
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+}
+
+.sidebarItem:hover {
+  background: var(--hover);
+}
+
+.sidebarItemActive {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--foreground-bright);
+}
+
+.sidebarLabel {
+  flex: 1;
+}
+
+.sidebarCount {
+  font-size: 0.75rem;
+  color: var(--muted);
+  min-width: 20px;
+  text-align: right;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Content area                                                       */
+/* ------------------------------------------------------------------ */
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--background);
+}
+
+/* Content header / search */
+.contentHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--chrome);
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.backBtn:hover {
+  background: var(--hover);
+  color: var(--foreground);
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+}
+
+.searchBox:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.searchInput {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-family: inherit;
+}
+
+.searchInput::placeholder {
+  color: var(--muted);
+}
+
+.clearBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 0;
+}
+
+.clearBtn:hover {
+  color: var(--foreground);
+  background: var(--hover);
+}
+
+/* ------------------------------------------------------------------ */
+/*  List area                                                          */
+/* ------------------------------------------------------------------ */
+
+.listArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+/* Group header */
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px 4px;
+  user-select: none;
+}
+
+.groupLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.groupCount {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+/* Approval row */
+.approvalRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px;
+  min-height: 36px;
+  cursor: default;
+}
+
+.approvalRow:hover {
+  background: var(--hover);
+}
+
+.approvalRow:hover .removeBtn {
+  opacity: 1;
+}
+
+/* Checkbox */
+.checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--muted);
+  border-radius: 3px;
+  background: none;
+  color: var(--foreground-bright);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  font-size: 14px;
+}
+
+.checkbox:hover {
+  border-color: var(--accent);
+}
+
+/* Approval info */
+.approvalInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 1px;
+}
+
+.approvalLabel {
+  font-size: 0.8125rem;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.approvalDisabled {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 50%, transparent);
+}
+
+.approvalDesc {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Kind badge */
+.kindBadge {
+  font-size: 0.625rem;
+  color: var(--muted);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Remove button */
+.removeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.removeBtn:hover {
+  background: var(--hover);
+  color: var(--error);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Empty state                                                        */
+/* ------------------------------------------------------------------ */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.emptyTitle {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.emptyDesc {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* Other section placeholder */
+.otherSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+  flex: 1;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Footer                                                             */
+/* ------------------------------------------------------------------ */
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--chrome);
+}
+
+.footerText {
+  font-size: 0.75rem;
+  color: var(--muted);
+  flex: 1;
+}
+
+.footerLink {
+  font-size: 0.75rem;
+  color: var(--link);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.footerLink:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}

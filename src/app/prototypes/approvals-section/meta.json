@@ -1,0 +1,7 @@
+{
+  "title": "Approvals Section",
+  "description": "Prototype of an Approvals section in the VS Code Agent Customizations editor, surfacing tool/server/URL approval management with inline checkboxes and workspace/user groups.",
+  "author": "Harald Kirschner",
+  "tags": ["ai-customization", "approvals", "editor", "sidebar"],
+  "createdAt": "2025-04-24"
+}

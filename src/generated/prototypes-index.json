@@ -1,0 +1,69 @@
+[
+  {
+    "slug": "copilot-status-tooltip",
+    "title": "Copilot Status Tooltip",
+    "description": "Status bar tooltip popup for Copilot Free — quick settings with toggles, eagerness control, and snooze action.",
+    "author": "Team",
+    "tags": [
+      "copilot",
+      "status-bar",
+      "tooltip",
+      "settings"
+    ],
+    "createdAt": "2026-04-23",
+    "hasDesign": true
+  },
+  {
+    "slug": "agent-orchestration-board",
+    "title": "Agent Orchestration Board",
+    "description": "Kanban-style control board for tracking multi-agent orchestration with real-time status, dependency visualization, and human-in-the-loop decision points.",
+    "author": "Team",
+    "tags": [
+      "agents",
+      "kanban",
+      "orchestration",
+      "multi-agent"
+    ],
+    "createdAt": "2026-02-26",
+    "hasDesign": true
+  },
+  {
+    "slug": "counter-demo",
+    "title": "Counter Demo",
+    "description": "A simple interactive counter using React state. Demonstrates that client components work within the prototype sandbox.",
+    "author": "Team",
+    "tags": [
+      "interactive",
+      "client-component",
+      "react"
+    ],
+    "createdAt": "2026-02-24",
+    "hasDesign": false
+  },
+  {
+    "slug": "hello-world",
+    "title": "Hello World",
+    "description": "A minimal static prototype to validate the scaffold. Nothing fancy — just proof that the system works.",
+    "author": "Team",
+    "tags": [
+      "starter",
+      "static"
+    ],
+    "createdAt": "2026-02-24",
+    "hasDesign": false
+  },
+  {
+    "slug": "approvals-section",
+    "title": "Approvals Section",
+    "description": "Prototype of an Approvals section in the VS Code Agent Customizations editor, surfacing tool/server/URL approval management with inline checkboxes and workspace/user groups.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "ai-customization",
+      "approvals",
+      "editor",
+      "sidebar"
+    ],
+    "createdAt": "2025-04-24",
+    "hasDesign": true
+  }
+]
