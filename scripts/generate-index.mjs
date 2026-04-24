@@ -29,3 +29,26 @@ const entries = readdirSync(prototypesDir, { withFileTypes: true })
 mkdirSync(outputDir, { recursive: true });
 writeFileSync(outputFile, JSON.stringify(entries, null, 2));
 console.log(`Generated index with ${entries.length} prototype(s).`);
+
+// Auto-generate per-prototype layout.tsx for OG metadata
+const layoutTemplate = `import { prototypeMetadata } from "../prototype-metadata";
+import meta from "./meta.json";
+
+export const metadata = prototypeMetadata(meta);
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return children;
+}
+`;
+
+let layoutCount = 0;
+for (const entry of entries) {
+  const layoutPath = join(prototypesDir, entry.slug, "layout.tsx");
+  if (!existsSync(layoutPath)) {
+    writeFileSync(layoutPath, layoutTemplate);
+    layoutCount++;
+  }
+}
+if (layoutCount > 0) {
+  console.log(`Generated ${layoutCount} prototype layout(s) for OG metadata.`);
+}

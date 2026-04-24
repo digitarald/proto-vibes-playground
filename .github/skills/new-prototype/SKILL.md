@@ -112,10 +112,25 @@ Bootstrap a starter design doc so the team has a place to capture learnings from
 
 Keep it minimal — sections like **Validated Patterns**, **Structure**, and **Scenario** get added as the prototype evolves.
 
-### 5. Ensure the dev server is running
+### 5. Create `layout.tsx`
+
+Add a layout file that exports Open Graph metadata so the prototype gets a nice title and description when shared as a link in Slack or social media.
+
+```tsx
+import { prototypeMetadata } from "../prototype-metadata";
+import meta from "./meta.json";
+
+export const metadata = prototypeMetadata(meta);
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return children;
+}
+```
+
+### 6. Ensure the dev server is running
 
 Check if the `dev` task is already running. If not, start it using `run_task` with the `shell: dev` task. Wait for it to be ready before proceeding.
 
-### 6. Open in integrated browser
+### 7. Open in integrated browser
 
 Open the prototype page at `http://localhost:3000/prototypes/<slug>` in the integrated browser so the user can see it immediately.
