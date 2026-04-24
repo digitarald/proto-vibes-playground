@@ -14,6 +14,8 @@ if (!existsSync(prototypesDir)) {
   process.exit(0);
 }
 
+const VARIANT_RE = /^(.+)-v(\d+)-(.+)$/;
+
 const entries = readdirSync(prototypesDir, { withFileTypes: true })
   .filter((d) => d.isDirectory())
   .map((d) => {
@@ -21,7 +23,11 @@ const entries = readdirSync(prototypesDir, { withFileTypes: true })
     if (!existsSync(metaPath)) return null;
     const meta = JSON.parse(readFileSync(metaPath, "utf-8"));
     const hasDesign = existsSync(join(prototypesDir, d.name, "DESIGN.md"));
-    return { slug: d.name, ...meta, hasDesign };
+    const variantMatch = d.name.match(VARIANT_RE);
+    const variant = variantMatch
+      ? { parentSlug: variantMatch[1], version: parseInt(variantMatch[2], 10), descriptor: variantMatch[3] }
+      : null;
+    return { slug: d.name, ...meta, hasDesign, variant };
   })
   .filter(Boolean)
   .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));

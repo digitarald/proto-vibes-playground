@@ -11,7 +11,8 @@
       "settings"
     ],
     "createdAt": "2026-04-23",
-    "hasDesign": true
+    "hasDesign": true,
+    "variant": null
   },
   {
     "slug": "agent-orchestration-board",
@@ -25,7 +26,8 @@
       "multi-agent"
     ],
     "createdAt": "2026-02-26",
-    "hasDesign": true
+    "hasDesign": true,
+    "variant": null
   },
   {
     "slug": "counter-demo",
@@ -38,7 +40,8 @@
       "react"
     ],
     "createdAt": "2026-02-24",
-    "hasDesign": false
+    "hasDesign": false,
+    "variant": null
   },
   {
     "slug": "hello-world",
@@ -50,7 +53,8 @@
       "static"
     ],
     "createdAt": "2026-02-24",
-    "hasDesign": false
+    "hasDesign": false,
+    "variant": null
   },
   {
     "slug": "approvals-section",
@@ -64,7 +68,8 @@
       "sidebar"
     ],
     "createdAt": "2025-04-24",
-    "hasDesign": true
+    "hasDesign": true,
+    "variant": null
   },
   {
     "slug": "approvals-section-v2-separated",
@@ -78,6 +83,11 @@
       "sidebar"
     ],
     "createdAt": "2025-04-24",
-    "hasDesign": false
+    "hasDesign": false,
+    "variant": {
+      "parentSlug": "approvals-section",
+      "version": 2,
+      "descriptor": "separated"
+    }
   }
 ]

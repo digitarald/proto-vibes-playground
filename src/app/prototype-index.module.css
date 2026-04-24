@@ -6,6 +6,10 @@
   border-top: 1px solid var(--border);
 }
 
+.group {
+  /* Container for parent + variants */
+}
+
 .item {
   display: block;
   padding: 0.75rem;
@@ -57,4 +61,70 @@
 
 .tabularNums {
   font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Variant rows (nested under parent)                                 */
+/* ------------------------------------------------------------------ */
+
+.variantList {
+  margin-left: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--border);
+  margin-bottom: 0.25rem;
+}
+
+.variantItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.variantItem:hover {
+  background: color-mix(in srgb, var(--hover) 50%, transparent);
+}
+
+.versionBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.0625rem 0.375rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.variantItem:hover .versionBadge {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.variantDescriptor {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground);
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.variantItem:hover .variantDescriptor {
+  color: var(--accent);
+}
+
+.variantSummary {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
