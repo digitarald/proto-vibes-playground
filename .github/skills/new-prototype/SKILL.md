@@ -1,6 +1,6 @@
 ---
 name: new-prototype
-description: "Bootstrap a new prototype in the playground. Use when the user wants to create, add, or scaffold a new prototype page."
+description: "Bootstrap a new prototype in the playground. Use when the user wants to create, add, scaffold, copy, or make a variant of a prototype page."
 ---
 
 # Bootstrap a New Prototype
@@ -13,7 +13,7 @@ Derive these from the user's request — infer sensible defaults for anything no
 
 | Field | Source | Default |
 |---|---|---|
-| **slug** | Kebab-case from the title or topic | — |
+| **slug** | Kebab-case from the title or topic (see **Variant Naming** below) | — |
 | **title** | User's description of the prototype | Titlecase of slug |
 | **description** | One-sentence summary of what it does | Generic placeholder based on title |
 | **author** | User's name if known | `"Team"` |
@@ -22,6 +22,23 @@ Derive these from the user's request — infer sensible defaults for anything no
 | **interactive** | Whether the prototype needs client-side state | Infer from description |
 
 ## Procedure
+
+### 0. Detect variant vs. new prototype
+
+If the user asks to "copy", "fork", "make a variant of", or "iterate on" an existing prototype, this is a **variant**, not a fresh prototype.
+
+**Variant naming convention:** `<original-slug>-v<N>-<descriptor>`
+
+- `<original-slug>` — the slug of the prototype being forked (e.g. `approvals-section`)
+- `<N>` — next available version number. Scan existing folders matching `<original-slug>-v*` to find the highest N, then increment. If none exist, use `v2` (the original is implicitly v1).
+- `<descriptor>` — short kebab-case word(s) describing what this variant does differently (e.g. `separated`, `inline-toggles`, `flat-list`)
+
+Examples:
+- First variant of `approvals-section` → `approvals-section-v2-separated`
+- Second variant → `approvals-section-v3-inline-toggles`
+- Variant of `copilot-status-tooltip` → `copilot-status-tooltip-v2-compact`
+
+For variants, copy `page.tsx` and `page.module.css` from the source prototype as the starting point, then apply the requested changes.
 
 ### 1. Create the folder
 
