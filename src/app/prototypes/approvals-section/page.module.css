@@ -294,16 +294,16 @@
 
 /* Source group */
 .sourceGroup {
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .sourceHeader {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 16px 6px 28px;
+  padding: 8px 16px 8px 28px;
   cursor: pointer;
-  min-height: 36px;
+  min-height: 40px;
   user-select: none;
 }
 
@@ -372,8 +372,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 16px 4px 52px;
-  min-height: 32px;
+  padding: 6px 16px 6px 52px;
+  min-height: 36px;
   cursor: default;
 }
 

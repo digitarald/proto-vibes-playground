@@ -277,10 +277,12 @@ function SourceHeader({
   } else if (totalCount > 0) {
     const denied = totalCount - allowedCount;
     const parts: string[] = [];
-    if (allowedCount > 0) parts.push(`${allowedCount} allowed`);
+    if (allowedCount > 0) {
+      parts.push(source.totalTools ? `${allowedCount} of ${source.totalTools} allowed` : `${allowedCount} allowed`);
+    }
     if (denied > 0) parts.push(`${denied} denied`);
-    if (source.totalTools) parts.push(`of ${source.totalTools}`);
-    summary = parts.join(", ");
+    if (allowedCount === 0 && source.totalTools) parts.push(`${source.totalTools} tools`);
+    summary = parts.join(" · ");
   } else {
     summary = source.totalTools
       ? `${source.totalTools} tools`
