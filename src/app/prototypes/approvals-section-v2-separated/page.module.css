@@ -266,7 +266,7 @@
 .listArea {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 8px 0;
 }
 
 /* Scope header (Workspace / User) */
@@ -274,7 +274,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px 4px;
+  padding: 16px 16px 6px;
   user-select: none;
 }
 
@@ -294,16 +294,16 @@
 
 /* Source group */
 .sourceGroup {
-  margin-bottom: 1px;
+  margin-bottom: 2px;
 }
 
 .sourceHeader {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 16px 5px 28px;
+  padding: 6px 16px 6px 28px;
   cursor: pointer;
-  min-height: 32px;
+  min-height: 36px;
   user-select: none;
 }
 
@@ -371,9 +371,9 @@
 .entryRow {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 16px 3px 52px;
-  min-height: 28px;
+  gap: 8px;
+  padding: 4px 16px 4px 52px;
+  min-height: 32px;
   cursor: default;
 }
 
