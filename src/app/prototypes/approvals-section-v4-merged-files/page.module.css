@@ -258,12 +258,6 @@
   background: color-mix(in srgb, var(--warning) 8%, transparent);
 }
 
-.summaryHidden {
-  color: var(--error);
-  border-color: color-mix(in srgb, var(--error) 30%, transparent);
-  background: color-mix(in srgb, var(--error) 8%, transparent);
-}
-
 /* Filter / add bar */
 .contentHeader {
   display: flex;
@@ -497,27 +491,6 @@
 .actionPill.actionActive.access_write {
   background: color-mix(in srgb, var(--warning) 18%, transparent);
   color: var(--warning);
-}
-
-/* 4-state file access — escalating from hidden (most restrictive) to full edit (most trust) */
-.actionPill.actionActive.fileAccess_hidden {
-  background: color-mix(in srgb, var(--error) 18%, transparent);
-  color: var(--error);
-}
-
-.actionPill.actionActive.fileAccess_read {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
-  color: var(--accent);
-}
-
-.actionPill.actionActive.fileAccess_ask {
-  background: color-mix(in srgb, var(--warning) 18%, transparent);
-  color: var(--warning);
-}
-
-.actionPill.actionActive.fileAccess_allow {
-  background: color-mix(in srgb, var(--success) 18%, transparent);
-  color: var(--success);
 }
 
 .actionPill.actionActive {

@@ -9,12 +9,12 @@ import styles from "./page.module.css";
 /* ------------------------------------------------------------------ */
 
 type RuleAction = "allow" | "ask" | "deny";
-type FileAccess = "hidden" | "read" | "ask" | "allow";
 type AccessLevel = "read" | "write";
 type RuleScope = "workspace" | "user";
 type PermissionDomain =
   | "terminal"
-  | "files"
+  | "edits"
+  | "read"
   | "fetch"
   | "mcp"
   | "builtin"
@@ -25,14 +25,12 @@ interface PermissionRule {
   domain: PermissionDomain;
   /** Pattern syntax depends on domain (glob, regex, URL, server:tool, tool-id, path) */
   pattern: string;
-  /** allow/ask/deny for tri-state domains; undefined for the workspace and files domains */
+  /** allow/ask/deny for tri-state domains; undefined for the workspace domain */
   action?: RuleAction;
-  /** read/write for the external folder access domain */
+  /** read/write for the external folder access domain; undefined for tri-state domains */
   access?: AccessLevel;
-  /** hidden/read/ask/allow for the unified file access domain */
-  fileAccess?: FileAccess;
   scope: RuleScope;
-  /** For terminal/files — distinguishes glob vs regex */
+  /** For terminal/edits/read — distinguishes glob vs regex */
   matchType?: "glob" | "regex" | "exact";
 }
 
@@ -68,12 +66,20 @@ const PERMISSION_DOMAINS: {
     description: "Control which terminal commands run automatically.",
   },
   {
-    id: "files",
-    label: "Files",
-    icon: "file",
-    settingKey: "chat.tools.files.rules",
+    id: "edits",
+    label: "File Edits",
+    icon: "edit",
+    settingKey: "chat.tools.edits.rules",
     patternHint: "Glob pattern (e.g. src/**)",
-    description: "Control file access. A single rule covers both reads and edits — hiding a file also blocks edits since the agent can't modify what it can't see.",
+    description: "Control which files the agent may edit.",
+  },
+  {
+    id: "read",
+    label: "File Reads",
+    icon: "file",
+    settingKey: "chat.tools.read.rules",
+    patternHint: "Glob pattern (e.g. .env*)",
+    description: "Control which files the agent can read.",
   },
   {
     id: "fetch",
@@ -118,15 +124,18 @@ const INITIAL_RULES: PermissionRule[] = [
   { id: "t-curl", domain: "terminal", pattern: "curl *", action: "deny", scope: "user" },
   { id: "t-rm", domain: "terminal", pattern: "rm -rf *", action: "deny", scope: "user" },
   { id: "t-sudo", domain: "terminal", pattern: "^sudo\\s+", action: "deny", scope: "user", matchType: "regex" },
-  // Files (merged read + edit access — single rule per pattern)
-  { id: "f-src", domain: "files", pattern: "src/**", fileAccess: "allow", scope: "workspace" },
-  { id: "f-tests", domain: "files", pattern: "tests/**", fileAccess: "allow", scope: "workspace" },
-  { id: "f-pkg", domain: "files", pattern: "**/package.json", fileAccess: "ask", scope: "workspace" },
-  { id: "f-lock", domain: "files", pattern: "**/package-lock.json", fileAccess: "read", scope: "workspace" },
-  { id: "f-env", domain: "files", pattern: "**/.env*", fileAccess: "hidden", scope: "user" },
-  { id: "f-secrets", domain: "files", pattern: "**/secrets/**", fileAccess: "hidden", scope: "user" },
-  { id: "f-credentials", domain: "files", pattern: "**/credentials/**", fileAccess: "hidden", scope: "user" },
-  { id: "f-git", domain: "files", pattern: "**/.git/**", fileAccess: "hidden", scope: "user" },
+  // Edits
+  { id: "e-src", domain: "edits", pattern: "src/**", action: "allow", scope: "workspace" },
+  { id: "e-tests", domain: "edits", pattern: "tests/**", action: "allow", scope: "workspace" },
+  { id: "e-pkg", domain: "edits", pattern: "**/package.json", action: "ask", scope: "workspace" },
+  { id: "e-lock", domain: "edits", pattern: "**/package-lock.json", action: "ask", scope: "workspace" },
+  { id: "e-git", domain: "edits", pattern: "**/.git/**", action: "deny", scope: "user" },
+  { id: "e-env", domain: "edits", pattern: "**/.env*", action: "deny", scope: "user" },
+  // Read
+  { id: "r-env", domain: "read", pattern: ".env*", action: "deny", scope: "user" },
+  { id: "r-secrets", domain: "read", pattern: "**/secrets/**", action: "deny", scope: "user" },
+  { id: "r-credentials", domain: "read", pattern: "**/credentials/**", action: "deny", scope: "user" },
+  { id: "r-git", domain: "read", pattern: "**/.git/**", action: "deny", scope: "user" },
   // Fetch
   { id: "f-vscode", domain: "fetch", pattern: "code.visualstudio.com/*", action: "allow", scope: "workspace" },
   { id: "f-gh", domain: "fetch", pattern: "github.com/*", action: "allow", scope: "workspace" },
@@ -173,20 +182,6 @@ const ACTIONS: { id: RuleAction; label: string; icon: string }[] = [
 const ACCESS_LEVELS: { id: AccessLevel; label: string; icon: string }[] = [
   { id: "read", label: "Read", icon: "eye" },
   { id: "write", label: "Read + Write", icon: "edit" },
-];
-
-/**
- * 4-state file access vocabulary. Increasing trust left → right:
- *  - hidden  : agent can't see or edit the file (gitignore-style exclusion)
- *  - read    : read-only; edits always blocked
- *  - ask     : read freely, confirm before each edit
- *  - allow   : full read + write without prompting
- */
-const FILE_ACCESS_LEVELS: { id: FileAccess; label: string; icon: string }[] = [
-  { id: "hidden", label: "Hidden", icon: "eye-closed" },
-  { id: "read", label: "Read-only", icon: "eye" },
-  { id: "ask", label: "Ask to Edit", icon: "question" },
-  { id: "allow", label: "Full Edit", icon: "pass-filled" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -243,47 +238,19 @@ function AccessToggle({
   );
 }
 
-function FileAccessToggle({
-  value,
-  onChange,
-}: {
-  value: FileAccess;
-  onChange: (next: FileAccess) => void;
-}) {
-  return (
-    <div className={styles.actionToggle} role="radiogroup" aria-label="File access">
-      {FILE_ACCESS_LEVELS.map((a) => (
-        <button
-          key={a.id}
-          className={`${styles.actionPill} ${styles[`fileAccess_${a.id}`]} ${value === a.id ? styles.actionActive : ""}`}
-          onClick={() => onChange(a.id)}
-          aria-pressed={value === a.id}
-          title={a.label}
-        >
-          <Codicon name={a.icon} style={{ fontSize: 11 }} />
-          <span>{a.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
 function RuleRow({
   rule,
   onActionChange,
   onAccessChange,
-  onFileAccessChange,
   onRemove,
 }: {
   rule: PermissionRule;
   onActionChange: (action: RuleAction) => void;
   onAccessChange: (access: AccessLevel) => void;
-  onFileAccessChange: (fileAccess: FileAccess) => void;
   onRemove: () => void;
 }) {
   const isRegex = rule.matchType === "regex";
   const isWorkspaceDomain = rule.domain === "workspace";
-  const isFilesDomain = rule.domain === "files";
   return (
     <div className={styles.ruleRow}>
       <div className={styles.patternCell}>
@@ -298,8 +265,6 @@ function RuleRow({
       </div>
       {isWorkspaceDomain ? (
         <AccessToggle value={rule.access ?? "read"} onChange={onAccessChange} />
-      ) : isFilesDomain ? (
-        <FileAccessToggle value={rule.fileAccess ?? "ask"} onChange={onFileAccessChange} />
       ) : (
         <ActionToggle value={rule.action ?? "ask"} onChange={onActionChange} />
       )}
@@ -342,10 +307,6 @@ export default function ApprovalsProposalAPage() {
 
   const changeAccess = useCallback((id: string, access: AccessLevel) => {
     setRules((prev) => prev.map((r) => (r.id === id ? { ...r, access } : r)));
-  }, []);
-
-  const changeFileAccess = useCallback((id: string, fileAccess: FileAccess) => {
-    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, fileAccess } : r)));
   }, []);
 
   const removeRule = useCallback((id: string) => {
@@ -393,7 +354,6 @@ export default function ApprovalsProposalAPage() {
         rule={rule}
         onActionChange={(action) => changeAction(rule.id, action)}
         onAccessChange={(access) => changeAccess(rule.id, access)}
-        onFileAccessChange={(fileAccess) => changeFileAccess(rule.id, fileAccess)}
         onRemove={() => removeRule(rule.id)}
       />
     ));
@@ -496,25 +456,6 @@ export default function ApprovalsProposalAPage() {
                         {rules.filter((r) => r.domain === "workspace" && r.access === "write").length} read + write
                       </span>
                     </>
-                  ) : activeDomain === "files" ? (
-                    <>
-                      <span className={`${styles.summaryChip} ${styles.summaryHidden}`}>
-                        <Codicon name="eye-closed" style={{ fontSize: 11 }} />
-                        {rules.filter((r) => r.domain === "files" && r.fileAccess === "hidden").length} hidden
-                      </span>
-                      <span className={`${styles.summaryChip} ${styles.summaryRead}`}>
-                        <Codicon name="eye" style={{ fontSize: 11 }} />
-                        {rules.filter((r) => r.domain === "files" && r.fileAccess === "read").length} read-only
-                      </span>
-                      <span className={`${styles.summaryChip} ${styles.summaryAsk}`}>
-                        <Codicon name="question" style={{ fontSize: 11 }} />
-                        {rules.filter((r) => r.domain === "files" && r.fileAccess === "ask").length} ask to edit
-                      </span>
-                      <span className={`${styles.summaryChip} ${styles.summaryAllow}`}>
-                        <Codicon name="pass-filled" style={{ fontSize: 11 }} />
-                        {rules.filter((r) => r.domain === "files" && r.fileAccess === "allow").length} full edit
-                      </span>
-                    </>
                   ) : (
                     <>
                       <span className={`${styles.summaryChip} ${styles.summaryAllow}`}>
@@ -598,10 +539,6 @@ export default function ApprovalsProposalAPage() {
                   {activeDomain === "workspace" ? (
                     <>
                       Paths grant access outside the open workspace. <code>read</code> permits inspection only; <code>read + write</code> allows edits.
-                    </>
-                  ) : activeDomain === "files" ? (
-                    <>
-                      One rule per pattern covers both reads and edits. <code>hidden</code> excludes the file entirely — the agent can&apos;t edit what it can&apos;t see.
                     </>
                   ) : (
                     <>
