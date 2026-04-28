@@ -19,6 +19,26 @@
     }
   },
   {
+    "slug": "approvals-section-v4-merged-files",
+    "title": "Approvals Section (Merged Files)",
+    "description": "Variant exploring a unified File Access panel that combines reads and edits into a single Hidden / Read / Ask / Allow control per rule.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "ai-customization",
+      "approvals",
+      "permissions",
+      "proposal-a",
+      "files"
+    ],
+    "createdAt": "2026-04-27",
+    "hasDesign": false,
+    "variant": {
+      "parentSlug": "approvals-section",
+      "version": 4,
+      "descriptor": "merged-files"
+    }
+  },
+  {
     "slug": "copilot-status-tooltip",
     "title": "Copilot Status Tooltip",
     "description": "Status bar tooltip popup for Copilot Free — quick settings with toggles, eagerness control, and snooze action.",

@@ -1,0 +1,7 @@
+{
+  "title": "Approvals Section (Merged Files)",
+  "description": "Variant exploring a unified File Access panel that combines reads and edits into a single Hidden / Read / Ask / Allow control per rule.",
+  "author": "Harald Kirschner",
+  "tags": ["ai-customization", "approvals", "permissions", "proposal-a", "files"],
+  "createdAt": "2026-04-27"
+}

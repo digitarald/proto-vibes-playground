@@ -1,0 +1,635 @@
+"use client";
+
+import { useState, useMemo, useCallback } from "react";
+import { Codicon } from "../../components/codicon";
+import styles from "./page.module.css";
+
+/* ------------------------------------------------------------------ */
+/*  Data types — unified rule primitive (Proposal A)                   */
+/* ------------------------------------------------------------------ */
+
+type RuleAction = "allow" | "ask" | "deny";
+type FileAccess = "hidden" | "read" | "ask" | "allow";
+type AccessLevel = "read" | "write";
+type RuleScope = "workspace" | "user";
+type PermissionDomain =
+  | "terminal"
+  | "files"
+  | "fetch"
+  | "mcp"
+  | "builtin"
+  | "workspace";
+
+interface PermissionRule {
+  id: string;
+  domain: PermissionDomain;
+  /** Pattern syntax depends on domain (glob, regex, URL, server:tool, tool-id, path) */
+  pattern: string;
+  /** allow/ask/deny for tri-state domains; undefined for the workspace and files domains */
+  action?: RuleAction;
+  /** read/write for the external folder access domain */
+  access?: AccessLevel;
+  /** hidden/read/ask/allow for the unified file access domain */
+  fileAccess?: FileAccess;
+  scope: RuleScope;
+  /** For terminal/files — distinguishes glob vs regex */
+  matchType?: "glob" | "regex" | "exact";
+}
+
+type CustomizationSection =
+  | "agents"
+  | "skills"
+  | "instructions"
+  | "prompts"
+  | "hooks"
+  | "mcp-servers"
+  | "plugins";
+
+type SidebarSection = CustomizationSection | `domain-${PermissionDomain}`;
+
+/* ------------------------------------------------------------------ */
+/*  Mock data                                                          */
+/* ------------------------------------------------------------------ */
+
+const PERMISSION_DOMAINS: {
+  id: PermissionDomain;
+  label: string;
+  icon: string;
+  settingKey: string;
+  patternHint: string;
+  description: string;
+}[] = [
+  {
+    id: "terminal",
+    label: "Terminal",
+    icon: "terminal",
+    settingKey: "chat.tools.terminal.rules",
+    patternHint: "Subcommand glob or /regex/",
+    description: "Control which terminal commands run automatically.",
+  },
+  {
+    id: "files",
+    label: "Files",
+    icon: "file",
+    settingKey: "chat.tools.files.rules",
+    patternHint: "Glob pattern (e.g. src/**)",
+    description: "Control file access. A single rule covers both reads and edits — hiding a file also blocks edits since the agent can't modify what it can't see.",
+  },
+  {
+    id: "fetch",
+    label: "Network",
+    icon: "globe",
+    settingKey: "chat.tools.fetch.rules",
+    patternHint: "Domain or URL pattern",
+    description: "Control which URLs and domains the agent can access.",
+  },
+  {
+    id: "mcp",
+    label: "MCP Tools",
+    icon: "server",
+    settingKey: "chat.tools.mcp.rules",
+    patternHint: "server:tool_name or server:*",
+    description: "Control which MCP server tools may run.",
+  },
+  {
+    id: "builtin",
+    label: "Built-in Tools",
+    icon: "tools",
+    settingKey: "chat.tools.builtin.rules",
+    patternHint: "Tool ID (e.g. fetch_webpage)",
+    description: "Control built-in tools with side effects — fetch, browser, notebook, tasks. File and terminal access are managed in their own sections.",
+  },
+  {
+    id: "workspace",
+    label: "External Folders",
+    icon: "folder-opened",
+    settingKey: "chat.tools.workspace.rules",
+    patternHint: "Path to a folder outside the workspace",
+    description: "Extend the agent's reach to folders outside the open workspace. Grant read-only or full read+write access per path.",
+  },
+];
+
+const INITIAL_RULES: PermissionRule[] = [
+  // Terminal
+  { id: "t-npm", domain: "terminal", pattern: "npm run *", action: "allow", scope: "workspace" },
+  { id: "t-git-status", domain: "terminal", pattern: "git status", action: "allow", scope: "workspace" },
+  { id: "t-git-show", domain: "terminal", pattern: "git show *", action: "allow", scope: "workspace" },
+  { id: "t-git-push", domain: "terminal", pattern: "git push *", action: "ask", scope: "workspace" },
+  { id: "t-curl", domain: "terminal", pattern: "curl *", action: "deny", scope: "user" },
+  { id: "t-rm", domain: "terminal", pattern: "rm -rf *", action: "deny", scope: "user" },
+  { id: "t-sudo", domain: "terminal", pattern: "^sudo\\s+", action: "deny", scope: "user", matchType: "regex" },
+  // Files (merged read + edit access — single rule per pattern)
+  { id: "f-src", domain: "files", pattern: "src/**", fileAccess: "allow", scope: "workspace" },
+  { id: "f-tests", domain: "files", pattern: "tests/**", fileAccess: "allow", scope: "workspace" },
+  { id: "f-pkg", domain: "files", pattern: "**/package.json", fileAccess: "ask", scope: "workspace" },
+  { id: "f-lock", domain: "files", pattern: "**/package-lock.json", fileAccess: "read", scope: "workspace" },
+  { id: "f-env", domain: "files", pattern: "**/.env*", fileAccess: "hidden", scope: "user" },
+  { id: "f-secrets", domain: "files", pattern: "**/secrets/**", fileAccess: "hidden", scope: "user" },
+  { id: "f-credentials", domain: "files", pattern: "**/credentials/**", fileAccess: "hidden", scope: "user" },
+  { id: "f-git", domain: "files", pattern: "**/.git/**", fileAccess: "hidden", scope: "user" },
+  // Fetch
+  { id: "f-vscode", domain: "fetch", pattern: "code.visualstudio.com/*", action: "allow", scope: "workspace" },
+  { id: "f-gh", domain: "fetch", pattern: "github.com/*", action: "allow", scope: "workspace" },
+  { id: "f-npm", domain: "fetch", pattern: "*.npmjs.org", action: "allow", scope: "workspace" },
+  { id: "f-internal", domain: "fetch", pattern: "*.internal.corp", action: "deny", scope: "user" },
+  { id: "f-so", domain: "fetch", pattern: "stackoverflow.com/*", action: "allow", scope: "user" },
+  { id: "f-mdn", domain: "fetch", pattern: "developer.mozilla.org/*", action: "allow", scope: "user" },
+  // MCP
+  { id: "m-gh-all", domain: "mcp", pattern: "github:*", action: "allow", scope: "workspace" },
+  { id: "m-gh-merge", domain: "mcp", pattern: "github:merge_pull_request", action: "ask", scope: "workspace" },
+  { id: "m-gh-delete", domain: "mcp", pattern: "github:delete_*", action: "deny", scope: "workspace" },
+  { id: "m-perplexity", domain: "mcp", pattern: "perplexity:*", action: "allow", scope: "workspace" },
+  { id: "m-memory", domain: "mcp", pattern: "memory:*", action: "allow", scope: "user" },
+  { id: "m-excalidraw", domain: "mcp", pattern: "excalidraw:*", action: "allow", scope: "user" },
+  // Built-in (only tools with side effects — file edits/reads live in their own domains)
+  { id: "b-task", domain: "builtin", pattern: "run_task", action: "ask", scope: "workspace" },
+  { id: "b-fetch", domain: "builtin", pattern: "fetch_webpage", action: "allow", scope: "user" },
+  { id: "b-notebook", domain: "builtin", pattern: "run_notebook_cell", action: "ask", scope: "user" },
+  { id: "b-browser", domain: "builtin", pattern: "open_browser_page", action: "allow", scope: "user" },
+  // External folder access (read-only or read+write to folders outside the workspace)
+  { id: "w-docs", domain: "workspace", pattern: "../docs/", access: "read", scope: "workspace" },
+  { id: "w-shared", domain: "workspace", pattern: "../shared-libs/", access: "write", scope: "workspace" },
+  { id: "w-design", domain: "workspace", pattern: "~/Design/proto-vibes-playground/", access: "read", scope: "workspace" },
+  { id: "w-notes", domain: "workspace", pattern: "~/Notes/", access: "read", scope: "user" },
+  { id: "w-scratch", domain: "workspace", pattern: "~/scratch/", access: "write", scope: "user" },
+];
+
+const CUSTOMIZATION_ITEMS: { id: CustomizationSection; label: string; icon: string; count: number }[] = [
+  { id: "agents", label: "Agents", icon: "hubot", count: 17 },
+  { id: "skills", label: "Skills", icon: "lightbulb", count: 35 },
+  { id: "instructions", label: "Instructions", icon: "file-text", count: 1 },
+  { id: "prompts", label: "Prompts", icon: "comment-discussion", count: 26 },
+  { id: "hooks", label: "Hooks", icon: "git-commit", count: 3 },
+  { id: "mcp-servers", label: "MCP Servers", icon: "server-environment", count: 5 },
+  { id: "plugins", label: "Plugins", icon: "extensions", count: 3 },
+];
+
+const ACTIONS: { id: RuleAction; label: string; icon: string }[] = [
+  { id: "deny", label: "Deny", icon: "circle-slash" },
+  { id: "ask", label: "Ask", icon: "question" },
+  { id: "allow", label: "Allow", icon: "pass-filled" },
+];
+
+const ACCESS_LEVELS: { id: AccessLevel; label: string; icon: string }[] = [
+  { id: "read", label: "Read", icon: "eye" },
+  { id: "write", label: "Read + Write", icon: "edit" },
+];
+
+/**
+ * 4-state file access vocabulary. Increasing trust left → right:
+ *  - hidden  : agent can't see or edit the file (gitignore-style exclusion)
+ *  - read    : read-only; edits always blocked
+ *  - ask     : read freely, confirm before each edit
+ *  - allow   : full read + write without prompting
+ */
+const FILE_ACCESS_LEVELS: { id: FileAccess; label: string; icon: string }[] = [
+  { id: "hidden", label: "Hidden", icon: "eye-closed" },
+  { id: "read", label: "Read-only", icon: "eye" },
+  { id: "ask", label: "Ask to Edit", icon: "question" },
+  { id: "allow", label: "Full Edit", icon: "pass-filled" },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Components                                                         */
+/* ------------------------------------------------------------------ */
+
+function ActionToggle({
+  value,
+  onChange,
+}: {
+  value: RuleAction;
+  onChange: (next: RuleAction) => void;
+}) {
+  return (
+    <div className={styles.actionToggle} role="radiogroup" aria-label="Rule action">
+      {ACTIONS.map((a) => (
+        <button
+          key={a.id}
+          className={`${styles.actionPill} ${styles[`action_${a.id}`]} ${value === a.id ? styles.actionActive : ""}`}
+          onClick={() => onChange(a.id)}
+          aria-pressed={value === a.id}
+          title={a.label}
+        >
+          <Codicon name={a.icon} style={{ fontSize: 11 }} />
+          <span>{a.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function AccessToggle({
+  value,
+  onChange,
+}: {
+  value: AccessLevel;
+  onChange: (next: AccessLevel) => void;
+}) {
+  return (
+    <div className={styles.actionToggle} role="radiogroup" aria-label="Folder access">
+      {ACCESS_LEVELS.map((a) => (
+        <button
+          key={a.id}
+          className={`${styles.actionPill} ${styles[`access_${a.id}`]} ${value === a.id ? styles.actionActive : ""}`}
+          onClick={() => onChange(a.id)}
+          aria-pressed={value === a.id}
+          title={a.label}
+        >
+          <Codicon name={a.icon} style={{ fontSize: 11 }} />
+          <span>{a.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function FileAccessToggle({
+  value,
+  onChange,
+}: {
+  value: FileAccess;
+  onChange: (next: FileAccess) => void;
+}) {
+  return (
+    <div className={styles.actionToggle} role="radiogroup" aria-label="File access">
+      {FILE_ACCESS_LEVELS.map((a) => (
+        <button
+          key={a.id}
+          className={`${styles.actionPill} ${styles[`fileAccess_${a.id}`]} ${value === a.id ? styles.actionActive : ""}`}
+          onClick={() => onChange(a.id)}
+          aria-pressed={value === a.id}
+          title={a.label}
+        >
+          <Codicon name={a.icon} style={{ fontSize: 11 }} />
+          <span>{a.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RuleRow({
+  rule,
+  onActionChange,
+  onAccessChange,
+  onFileAccessChange,
+  onRemove,
+}: {
+  rule: PermissionRule;
+  onActionChange: (action: RuleAction) => void;
+  onAccessChange: (access: AccessLevel) => void;
+  onFileAccessChange: (fileAccess: FileAccess) => void;
+  onRemove: () => void;
+}) {
+  const isRegex = rule.matchType === "regex";
+  const isWorkspaceDomain = rule.domain === "workspace";
+  const isFilesDomain = rule.domain === "files";
+  return (
+    <div className={styles.ruleRow}>
+      <div className={styles.patternCell}>
+        {isRegex && <span className={styles.matchTag}>regex</span>}
+        {isWorkspaceDomain && (
+          <Codicon
+            name="folder"
+            style={{ fontSize: 14, color: "var(--muted)", flexShrink: 0 }}
+          />
+        )}
+        <span className={styles.patternText}>{rule.pattern}</span>
+      </div>
+      {isWorkspaceDomain ? (
+        <AccessToggle value={rule.access ?? "read"} onChange={onAccessChange} />
+      ) : isFilesDomain ? (
+        <FileAccessToggle value={rule.fileAccess ?? "ask"} onChange={onFileAccessChange} />
+      ) : (
+        <ActionToggle value={rule.action ?? "ask"} onChange={onActionChange} />
+      )}
+      <button className={styles.removeBtn} onClick={onRemove} aria-label="Remove rule">
+        <Codicon name="trash" style={{ fontSize: 14 }} />
+      </button>
+    </div>
+  );
+}
+
+function ScopeGroup({ label, count }: { label: string; count: number }) {
+  return (
+    <div className={styles.scopeHeader}>
+      <Codicon name="chevron-down" style={{ color: "var(--muted)", fontSize: 14 }} />
+      <span className={styles.scopeLabel}>{label}</span>
+      <span className={styles.scopeCount}>{count}</span>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main page                                                          */
+/* ------------------------------------------------------------------ */
+
+export default function ApprovalsProposalAPage() {
+  const [activeSection, setActiveSection] = useState<SidebarSection>("domain-terminal");
+  const [rules, setRules] = useState<PermissionRule[]>(INITIAL_RULES);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const isPermissionSection = activeSection.startsWith("domain-");
+  const activeDomain: PermissionDomain | null = isPermissionSection
+    ? (activeSection.replace("domain-", "") as PermissionDomain)
+    : null;
+
+  const activeDomainMeta = PERMISSION_DOMAINS.find((d) => d.id === activeDomain);
+
+  const changeAction = useCallback((id: string, action: RuleAction) => {
+    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, action } : r)));
+  }, []);
+
+  const changeAccess = useCallback((id: string, access: AccessLevel) => {
+    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, access } : r)));
+  }, []);
+
+  const changeFileAccess = useCallback((id: string, fileAccess: FileAccess) => {
+    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, fileAccess } : r)));
+  }, []);
+
+  const removeRule = useCallback((id: string) => {
+    setRules((prev) => prev.filter((r) => r.id !== id));
+  }, []);
+
+  /* Filter rules to current domain + search */
+  const visibleRules = useMemo(() => {
+    if (!activeDomain) return [];
+    let result = rules.filter((r) => r.domain === activeDomain);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((r) => r.pattern.toLowerCase().includes(q));
+    }
+    return result;
+  }, [rules, activeDomain, searchQuery]);
+
+  const workspaceRules = visibleRules.filter((r) => r.scope === "workspace");
+  const userRules = visibleRules.filter((r) => r.scope === "user");
+
+  /* Counts per domain for the sidebar */
+  const domainCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const d of PERMISSION_DOMAINS) {
+      counts[d.id] = rules.filter((r) => r.domain === d.id).length;
+    }
+    return counts;
+  }, [rules]);
+
+  /* Action breakdown for the active domain (for header summary) */
+  const actionBreakdown = useMemo(() => {
+    if (!activeDomain) return { allow: 0, ask: 0, deny: 0 };
+    const domainRules = rules.filter((r) => r.domain === activeDomain);
+    return {
+      allow: domainRules.filter((r) => r.action === "allow").length,
+      ask: domainRules.filter((r) => r.action === "ask").length,
+      deny: domainRules.filter((r) => r.action === "deny").length,
+    };
+  }, [rules, activeDomain]);
+
+  const renderRules = (items: PermissionRule[]) =>
+    items.map((rule) => (
+      <RuleRow
+        key={rule.id}
+        rule={rule}
+        onActionChange={(action) => changeAction(rule.id, action)}
+        onAccessChange={(access) => changeAccess(rule.id, access)}
+        onFileAccessChange={(fileAccess) => changeFileAccess(rule.id, fileAccess)}
+        onRemove={() => removeRule(rule.id)}
+      />
+    ));
+
+  return (
+    <div className={styles.scene}>
+      {/* Title bar */}
+      <div className={styles.titleBar}>
+        <div className={styles.titleBarLeft}>
+          <Codicon name="settings-gear" style={{ fontSize: 14 }} />
+          <span>Agent Customizations</span>
+        </div>
+        <div className={styles.titleBarActions}>
+          <button className={styles.titleBarBtn} aria-label="Open in editor">
+            <Codicon name="go-to-file" />
+          </button>
+          <button className={styles.titleBarBtn} aria-label="Maximize">
+            <Codicon name="chrome-maximize" />
+          </button>
+          <button className={styles.titleBarBtn} aria-label="Close">
+            <Codicon name="close" />
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.editorBody}>
+        {/* Sidebar — split into Customizations / Permissions */}
+        <nav className={styles.sidebar}>
+          <div className={styles.sidebarHeader}>
+            <div className={styles.scopeSelector}>
+              <Codicon name="home" style={{ fontSize: 14 }} />
+              <span>Local</span>
+              <Codicon name="chevron-down" style={{ fontSize: 12, color: "var(--muted)" }} />
+            </div>
+          </div>
+
+          <div className={styles.sidebarGroup}>
+            <div className={styles.sidebarGroupHeader}>Customizations</div>
+            <div className={styles.sidebarNav}>
+              {CUSTOMIZATION_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  className={`${styles.sidebarItem} ${activeSection === item.id ? styles.sidebarItemActive : ""}`}
+                  onClick={() => setActiveSection(item.id)}
+                >
+                  <Codicon name={item.icon} style={{ fontSize: 16 }} />
+                  <span className={styles.sidebarLabel}>{item.label}</span>
+                  <span className={styles.sidebarCount}>{item.count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.sidebarGroup}>
+            <div className={styles.sidebarGroupHeader}>Permissions</div>
+            <div className={styles.sidebarNav}>
+              {PERMISSION_DOMAINS.map((d) => {
+                const navId: SidebarSection = `domain-${d.id}`;
+                return (
+                  <button
+                    key={d.id}
+                    className={`${styles.sidebarItem} ${activeSection === navId ? styles.sidebarItemActive : ""}`}
+                    onClick={() => setActiveSection(navId)}
+                  >
+                    <Codicon name={d.icon} style={{ fontSize: 16 }} />
+                    <span className={styles.sidebarLabel}>{d.label}</span>
+                    <span className={styles.sidebarCount}>{domainCounts[d.id] ?? 0}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </nav>
+
+        {/* Content */}
+        <div className={styles.content}>
+          {isPermissionSection && activeDomainMeta ? (
+            <>
+              {/* Domain header — title, setting key, action summary */}
+              <div className={styles.domainHeader}>
+                <div className={styles.domainTitleRow}>
+                  <Codicon
+                    name={activeDomainMeta.icon}
+                    style={{ fontSize: 18, color: "var(--foreground-bright)" }}
+                  />
+                  <h1 className={styles.domainTitle}>{activeDomainMeta.label}</h1>
+                  <code className={styles.settingKey}>{activeDomainMeta.settingKey}</code>
+                </div>
+                <p className={styles.domainDescription}>{activeDomainMeta.description}</p>
+
+                <div className={styles.summaryRow}>
+                  {activeDomain === "workspace" ? (
+                    <>
+                      <span className={`${styles.summaryChip} ${styles.summaryRead}`}>
+                        <Codicon name="eye" style={{ fontSize: 11 }} />
+                        {rules.filter((r) => r.domain === "workspace" && r.access === "read").length} read
+                      </span>
+                      <span className={`${styles.summaryChip} ${styles.summaryWrite}`}>
+                        <Codicon name="edit" style={{ fontSize: 11 }} />
+                        {rules.filter((r) => r.domain === "workspace" && r.access === "write").length} read + write
+                      </span>
+                    </>
+                  ) : activeDomain === "files" ? (
+                    <>
+                      <span className={`${styles.summaryChip} ${styles.summaryHidden}`}>
+                        <Codicon name="eye-closed" style={{ fontSize: 11 }} />
+                        {rules.filter((r) => r.domain === "files" && r.fileAccess === "hidden").length} hidden
+                      </span>
+                      <span className={`${styles.summaryChip} ${styles.summaryRead}`}>
+                        <Codicon name="eye" style={{ fontSize: 11 }} />
+                        {rules.filter((r) => r.domain === "files" && r.fileAccess === "read").length} read-only
+                      </span>
+                      <span className={`${styles.summaryChip} ${styles.summaryAsk}`}>
+                        <Codicon name="question" style={{ fontSize: 11 }} />
+                        {rules.filter((r) => r.domain === "files" && r.fileAccess === "ask").length} ask to edit
+                      </span>
+                      <span className={`${styles.summaryChip} ${styles.summaryAllow}`}>
+                        <Codicon name="pass-filled" style={{ fontSize: 11 }} />
+                        {rules.filter((r) => r.domain === "files" && r.fileAccess === "allow").length} full edit
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className={`${styles.summaryChip} ${styles.summaryAllow}`}>
+                        <Codicon name="pass-filled" style={{ fontSize: 11 }} />
+                        {actionBreakdown.allow} allow
+                      </span>
+                      <span className={`${styles.summaryChip} ${styles.summaryAsk}`}>
+                        <Codicon name="question" style={{ fontSize: 11 }} />
+                        {actionBreakdown.ask} ask
+                      </span>
+                      <span className={`${styles.summaryChip} ${styles.summaryDeny}`}>
+                        <Codicon name="circle-slash" style={{ fontSize: 11 }} />
+                        {actionBreakdown.deny} deny
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Filter + add */}
+              <div className={styles.contentHeader}>
+                <div className={styles.searchBox}>
+                  <Codicon name="search" style={{ color: "var(--muted)", fontSize: 14 }} />
+                  <input
+                    type="text"
+                    className={styles.searchInput}
+                    placeholder={`Filter ${activeDomainMeta.label.toLowerCase()} rules...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button
+                      className={styles.clearBtn}
+                      onClick={() => setSearchQuery("")}
+                      aria-label="Clear search"
+                    >
+                      <Codicon name="close" />
+                    </button>
+                  )}
+                </div>
+                <div className={styles.headerActions}>
+                  <button className={styles.actionBtn} title={activeDomainMeta.patternHint}>
+                    <Codicon name="add" style={{ fontSize: 14 }} />
+                    <span>Add Rule</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Rule list */}
+              <div className={styles.listArea}>
+                {visibleRules.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <Codicon name={activeDomainMeta.icon} style={{ fontSize: 48, color: "var(--muted)" }} />
+                    <span className={styles.emptyTitle}>No {activeDomainMeta.label.toLowerCase()} rules</span>
+                    <span className={styles.emptyDesc}>
+                      {searchQuery
+                        ? "No rules match your search."
+                        : `Add a rule to control ${activeDomainMeta.label.toLowerCase()} access.`}
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    {workspaceRules.length > 0 && (
+                      <>
+                        <ScopeGroup label="Workspace" count={workspaceRules.length} />
+                        {renderRules(workspaceRules)}
+                      </>
+                    )}
+                    {userRules.length > 0 && (
+                      <>
+                        <ScopeGroup label="User" count={userRules.length} />
+                        {renderRules(userRules)}
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className={styles.footer}>
+                <span className={styles.footerText}>
+                  {activeDomain === "workspace" ? (
+                    <>
+                      Paths grant access outside the open workspace. <code>read</code> permits inspection only; <code>read + write</code> allows edits.
+                    </>
+                  ) : activeDomain === "files" ? (
+                    <>
+                      One rule per pattern covers both reads and edits. <code>hidden</code> excludes the file entirely — the agent can&apos;t edit what it can&apos;t see.
+                    </>
+                  ) : (
+                    <>
+                      Rules evaluate top-down. <code>deny</code> always blocks, <code>ask</code> always prompts, <code>allow</code> auto-approves.
+                    </>
+                  )}
+                </span>
+                <a className={styles.footerLink} href="#">
+                  Learn more
+                </a>
+              </div>
+            </>
+          ) : (
+            <div className={styles.otherSection}>
+              <Codicon
+                name={CUSTOMIZATION_ITEMS.find((s) => s.id === activeSection)?.icon || "info"}
+                style={{ fontSize: 48, color: "var(--muted)" }}
+              />
+              <span className={styles.emptyTitle}>
+                {CUSTOMIZATION_ITEMS.find((s) => s.id === activeSection)?.label}
+              </span>
+              <span className={styles.emptyDesc}>
+                Select a Permissions section in the sidebar to see the prototype.
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
