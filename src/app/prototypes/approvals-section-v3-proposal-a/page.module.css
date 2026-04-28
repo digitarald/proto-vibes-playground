@@ -246,6 +246,18 @@
   background: color-mix(in srgb, var(--error) 8%, transparent);
 }
 
+.summaryRead {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.summaryWrite {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 30%, transparent);
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+}
+
 /* Filter / add bar */
 .contentHeader {
   display: flex;
@@ -468,6 +480,17 @@
 .actionPill.actionActive.action_deny {
   background: color-mix(in srgb, var(--error) 18%, transparent);
   color: var(--error);
+}
+
+/* Read = neutral accent (inspection only); Write = warning (escalates risk) */
+.actionPill.actionActive.access_read {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+.actionPill.actionActive.access_write {
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+  color: var(--warning);
 }
 
 .actionPill.actionActive {

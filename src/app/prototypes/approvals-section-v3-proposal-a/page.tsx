@@ -9,6 +9,7 @@ import styles from "./page.module.css";
 /* ------------------------------------------------------------------ */
 
 type RuleAction = "allow" | "ask" | "deny";
+type AccessLevel = "read" | "write";
 type RuleScope = "workspace" | "user";
 type PermissionDomain =
   | "terminal"
@@ -16,14 +17,18 @@ type PermissionDomain =
   | "read"
   | "fetch"
   | "mcp"
-  | "builtin";
+  | "builtin"
+  | "workspace";
 
 interface PermissionRule {
   id: string;
   domain: PermissionDomain;
-  /** Pattern syntax depends on domain (glob, regex, URL, server:tool, tool-id) */
+  /** Pattern syntax depends on domain (glob, regex, URL, server:tool, tool-id, path) */
   pattern: string;
-  action: RuleAction;
+  /** allow/ask/deny for tri-state domains; undefined for the workspace domain */
+  action?: RuleAction;
+  /** read/write for the external folder access domain; undefined for tri-state domains */
+  access?: AccessLevel;
   scope: RuleScope;
   /** For terminal/edits/read — distinguishes glob vs regex */
   matchType?: "glob" | "regex" | "exact";
@@ -98,7 +103,15 @@ const PERMISSION_DOMAINS: {
     icon: "tools",
     settingKey: "chat.tools.builtin.rules",
     patternHint: "Tool ID (e.g. fetch_webpage)",
-    description: "Control built-in tools like fetch, browser, and notebook.",
+    description: "Control built-in tools with side effects — fetch, browser, notebook, tasks. File and terminal access are managed in their own sections.",
+  },
+  {
+    id: "workspace",
+    label: "External Folders",
+    icon: "folder-opened",
+    settingKey: "chat.tools.workspace.rules",
+    patternHint: "Path to a folder outside the workspace",
+    description: "Extend the agent's reach to folders outside the open workspace. Grant read-only or full read+write access per path.",
   },
 ];
 
@@ -137,13 +150,17 @@ const INITIAL_RULES: PermissionRule[] = [
   { id: "m-perplexity", domain: "mcp", pattern: "perplexity:*", action: "allow", scope: "workspace" },
   { id: "m-memory", domain: "mcp", pattern: "memory:*", action: "allow", scope: "user" },
   { id: "m-excalidraw", domain: "mcp", pattern: "excalidraw:*", action: "allow", scope: "user" },
-  // Built-in
-  { id: "b-readfile", domain: "builtin", pattern: "read_file", action: "allow", scope: "workspace" },
-  { id: "b-edit", domain: "builtin", pattern: "replace_string_in_file", action: "ask", scope: "workspace" },
-  { id: "b-task", domain: "builtin", pattern: "run_task", action: "deny", scope: "workspace" },
-  { id: "b-search", domain: "builtin", pattern: "semantic_search", action: "allow", scope: "user" },
+  // Built-in (only tools with side effects — file edits/reads live in their own domains)
+  { id: "b-task", domain: "builtin", pattern: "run_task", action: "ask", scope: "workspace" },
+  { id: "b-fetch", domain: "builtin", pattern: "fetch_webpage", action: "allow", scope: "user" },
   { id: "b-notebook", domain: "builtin", pattern: "run_notebook_cell", action: "ask", scope: "user" },
   { id: "b-browser", domain: "builtin", pattern: "open_browser_page", action: "allow", scope: "user" },
+  // External folder access (read-only or read+write to folders outside the workspace)
+  { id: "w-docs", domain: "workspace", pattern: "../docs/", access: "read", scope: "workspace" },
+  { id: "w-shared", domain: "workspace", pattern: "../shared-libs/", access: "write", scope: "workspace" },
+  { id: "w-design", domain: "workspace", pattern: "~/Design/proto-vibes-playground/", access: "read", scope: "workspace" },
+  { id: "w-notes", domain: "workspace", pattern: "~/Notes/", access: "read", scope: "user" },
+  { id: "w-scratch", domain: "workspace", pattern: "~/scratch/", access: "write", scope: "user" },
 ];
 
 const CUSTOMIZATION_ITEMS: { id: CustomizationSection; label: string; icon: string; count: number }[] = [
@@ -160,6 +177,11 @@ const ACTIONS: { id: RuleAction; label: string; icon: string }[] = [
   { id: "deny", label: "Deny", icon: "circle-slash" },
   { id: "ask", label: "Ask", icon: "question" },
   { id: "allow", label: "Allow", icon: "pass-filled" },
+];
+
+const ACCESS_LEVELS: { id: AccessLevel; label: string; icon: string }[] = [
+  { id: "read", label: "Read", icon: "eye" },
+  { id: "write", label: "Read + Write", icon: "edit" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -191,23 +213,61 @@ function ActionToggle({
   );
 }
 
+function AccessToggle({
+  value,
+  onChange,
+}: {
+  value: AccessLevel;
+  onChange: (next: AccessLevel) => void;
+}) {
+  return (
+    <div className={styles.actionToggle} role="radiogroup" aria-label="Folder access">
+      {ACCESS_LEVELS.map((a) => (
+        <button
+          key={a.id}
+          className={`${styles.actionPill} ${styles[`access_${a.id}`]} ${value === a.id ? styles.actionActive : ""}`}
+          onClick={() => onChange(a.id)}
+          aria-pressed={value === a.id}
+          title={a.label}
+        >
+          <Codicon name={a.icon} style={{ fontSize: 11 }} />
+          <span>{a.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function RuleRow({
   rule,
   onActionChange,
+  onAccessChange,
   onRemove,
 }: {
   rule: PermissionRule;
   onActionChange: (action: RuleAction) => void;
+  onAccessChange: (access: AccessLevel) => void;
   onRemove: () => void;
 }) {
   const isRegex = rule.matchType === "regex";
+  const isWorkspaceDomain = rule.domain === "workspace";
   return (
     <div className={styles.ruleRow}>
       <div className={styles.patternCell}>
         {isRegex && <span className={styles.matchTag}>regex</span>}
+        {isWorkspaceDomain && (
+          <Codicon
+            name="folder"
+            style={{ fontSize: 14, color: "var(--muted)", flexShrink: 0 }}
+          />
+        )}
         <span className={styles.patternText}>{rule.pattern}</span>
       </div>
-      <ActionToggle value={rule.action} onChange={onActionChange} />
+      {isWorkspaceDomain ? (
+        <AccessToggle value={rule.access ?? "read"} onChange={onAccessChange} />
+      ) : (
+        <ActionToggle value={rule.action ?? "ask"} onChange={onActionChange} />
+      )}
       <button className={styles.removeBtn} onClick={onRemove} aria-label="Remove rule">
         <Codicon name="trash" style={{ fontSize: 14 }} />
       </button>
@@ -243,6 +303,10 @@ export default function ApprovalsProposalAPage() {
 
   const changeAction = useCallback((id: string, action: RuleAction) => {
     setRules((prev) => prev.map((r) => (r.id === id ? { ...r, action } : r)));
+  }, []);
+
+  const changeAccess = useCallback((id: string, access: AccessLevel) => {
+    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, access } : r)));
   }, []);
 
   const removeRule = useCallback((id: string) => {
@@ -289,6 +353,7 @@ export default function ApprovalsProposalAPage() {
         key={rule.id}
         rule={rule}
         onActionChange={(action) => changeAction(rule.id, action)}
+        onAccessChange={(access) => changeAccess(rule.id, access)}
         onRemove={() => removeRule(rule.id)}
       />
     ));
@@ -380,18 +445,33 @@ export default function ApprovalsProposalAPage() {
                 <p className={styles.domainDescription}>{activeDomainMeta.description}</p>
 
                 <div className={styles.summaryRow}>
-                  <span className={`${styles.summaryChip} ${styles.summaryAllow}`}>
-                    <Codicon name="pass-filled" style={{ fontSize: 11 }} />
-                    {actionBreakdown.allow} allow
-                  </span>
-                  <span className={`${styles.summaryChip} ${styles.summaryAsk}`}>
-                    <Codicon name="question" style={{ fontSize: 11 }} />
-                    {actionBreakdown.ask} ask
-                  </span>
-                  <span className={`${styles.summaryChip} ${styles.summaryDeny}`}>
-                    <Codicon name="circle-slash" style={{ fontSize: 11 }} />
-                    {actionBreakdown.deny} deny
-                  </span>
+                  {activeDomain === "workspace" ? (
+                    <>
+                      <span className={`${styles.summaryChip} ${styles.summaryRead}`}>
+                        <Codicon name="eye" style={{ fontSize: 11 }} />
+                        {rules.filter((r) => r.domain === "workspace" && r.access === "read").length} read
+                      </span>
+                      <span className={`${styles.summaryChip} ${styles.summaryWrite}`}>
+                        <Codicon name="edit" style={{ fontSize: 11 }} />
+                        {rules.filter((r) => r.domain === "workspace" && r.access === "write").length} read + write
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className={`${styles.summaryChip} ${styles.summaryAllow}`}>
+                        <Codicon name="pass-filled" style={{ fontSize: 11 }} />
+                        {actionBreakdown.allow} allow
+                      </span>
+                      <span className={`${styles.summaryChip} ${styles.summaryAsk}`}>
+                        <Codicon name="question" style={{ fontSize: 11 }} />
+                        {actionBreakdown.ask} ask
+                      </span>
+                      <span className={`${styles.summaryChip} ${styles.summaryDeny}`}>
+                        <Codicon name="circle-slash" style={{ fontSize: 11 }} />
+                        {actionBreakdown.deny} deny
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -456,7 +536,15 @@ export default function ApprovalsProposalAPage() {
 
               <div className={styles.footer}>
                 <span className={styles.footerText}>
-                  Rules evaluate top-down. <code>deny</code> always blocks, <code>ask</code> always prompts, <code>allow</code> auto-approves.
+                  {activeDomain === "workspace" ? (
+                    <>
+                      Paths grant access outside the open workspace. <code>read</code> permits inspection only; <code>read + write</code> allows edits.
+                    </>
+                  ) : (
+                    <>
+                      Rules evaluate top-down. <code>deny</code> always blocks, <code>ask</code> always prompts, <code>allow</code> auto-approves.
+                    </>
+                  )}
                 </span>
                 <a className={styles.footerLink} href="#">
                   Learn more
