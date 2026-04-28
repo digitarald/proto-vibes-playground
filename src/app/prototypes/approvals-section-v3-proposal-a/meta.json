@@ -1,0 +1,7 @@
+{
+  "title": "Approvals Section (Proposal A)",
+  "description": "Variant exploring Proposal A: unified chat.tools.<domain>.rules settings with explicit deny/ask/allow tri-state per rule.",
+  "author": "Harald Kirschner",
+  "tags": ["ai-customization", "approvals", "permissions", "proposal-a"],
+  "createdAt": "2026-04-27"
+}
