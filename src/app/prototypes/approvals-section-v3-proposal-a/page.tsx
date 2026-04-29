@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Codicon } from "../../components/codicon";
 import styles from "./page.module.css";
 
@@ -188,55 +188,117 @@ const ACCESS_LEVELS: { id: AccessLevel; label: string; icon: string }[] = [
 /*  Components                                                         */
 /* ------------------------------------------------------------------ */
 
-function ActionToggle({
+interface DropdownOption<T extends string> {
+  id: T;
+  label: string;
+  icon: string;
+  /** Color variant token: 'allow' | 'ask' | 'deny' | 'read' | 'write' */
+  variant: string;
+}
+
+function Dropdown<T extends string>({
   value,
   onChange,
+  options,
+  ariaLabel,
 }: {
-  value: RuleAction;
-  onChange: (next: RuleAction) => void;
+  value: T;
+  onChange: (next: T) => void;
+  options: DropdownOption<T>[];
+  ariaLabel: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const current = options.find((o) => o.id === value) ?? options[0];
+
+  useEffect(() => {
+    if (!open) return;
+    function handleDown(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handleDown);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleDown);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
   return (
-    <div className={styles.actionToggle} role="radiogroup" aria-label="Rule action">
-      {ACTIONS.map((a) => (
-        <button
-          key={a.id}
-          className={`${styles.actionPill} ${styles[`action_${a.id}`]} ${value === a.id ? styles.actionActive : ""}`}
-          onClick={() => onChange(a.id)}
-          aria-pressed={value === a.id}
-          title={a.label}
-        >
-          <Codicon name={a.icon} style={{ fontSize: 11 }} />
-          <span>{a.label}</span>
-        </button>
-      ))}
+    <div className={styles.dropdownWrap} ref={wrapRef}>
+      <button
+        type="button"
+        className={`${styles.dropdownTrigger} ${styles[`trigger_${current.variant}`]} ${open ? styles.dropdownTriggerOpen : ""}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((o) => !o);
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+      >
+        <Codicon
+          name={current.icon}
+          style={{ fontSize: 12 }}
+          className={styles.dropdownTriggerIcon}
+        />
+        <span className={styles.dropdownTriggerLabel}>{current.label}</span>
+        <Codicon
+          name="chevron-down"
+          style={{ fontSize: 11, color: "var(--muted)" }}
+        />
+      </button>
+      {open && (
+        <div className={styles.dropdownMenu} role="listbox">
+          {options.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              role="option"
+              aria-selected={o.id === value}
+              className={`${styles.dropdownItem} ${o.id === value ? styles.dropdownItemActive : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(o.id);
+                setOpen(false);
+              }}
+            >
+              <Codicon
+                name={o.icon}
+                style={{ fontSize: 13 }}
+                className={styles[`itemIcon_${o.variant}`]}
+              />
+              <span className={styles.dropdownItemLabel}>{o.label}</span>
+              {o.id === value && (
+                <Codicon
+                  name="check"
+                  style={{ fontSize: 12, color: "var(--accent)" }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function AccessToggle({
-  value,
-  onChange,
-}: {
-  value: AccessLevel;
-  onChange: (next: AccessLevel) => void;
-}) {
-  return (
-    <div className={styles.actionToggle} role="radiogroup" aria-label="Folder access">
-      {ACCESS_LEVELS.map((a) => (
-        <button
-          key={a.id}
-          className={`${styles.actionPill} ${styles[`access_${a.id}`]} ${value === a.id ? styles.actionActive : ""}`}
-          onClick={() => onChange(a.id)}
-          aria-pressed={value === a.id}
-          title={a.label}
-        >
-          <Codicon name={a.icon} style={{ fontSize: 11 }} />
-          <span>{a.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
+const ACTION_OPTIONS: DropdownOption<RuleAction>[] = ACTIONS.map((a) => ({
+  id: a.id,
+  label: a.label,
+  icon: a.icon,
+  variant: a.id,
+}));
+
+const ACCESS_OPTIONS: DropdownOption<AccessLevel>[] = ACCESS_LEVELS.map((a) => ({
+  id: a.id,
+  label: a.label,
+  icon: a.icon,
+  variant: a.id,
+}));
 
 function RuleRow({
   rule,
@@ -264,9 +326,19 @@ function RuleRow({
         <span className={styles.patternText}>{rule.pattern}</span>
       </div>
       {isWorkspaceDomain ? (
-        <AccessToggle value={rule.access ?? "read"} onChange={onAccessChange} />
+        <Dropdown<AccessLevel>
+          value={rule.access ?? "read"}
+          onChange={onAccessChange}
+          options={ACCESS_OPTIONS}
+          ariaLabel="Folder access"
+        />
       ) : (
-        <ActionToggle value={rule.action ?? "ask"} onChange={onActionChange} />
+        <Dropdown<RuleAction>
+          value={rule.action ?? "ask"}
+          onChange={onActionChange}
+          options={ACTION_OPTIONS}
+          ariaLabel="Rule action"
+        />
       )}
       <button className={styles.removeBtn} onClick={onRemove} aria-label="Remove rule">
         <Codicon name="trash" style={{ fontSize: 14 }} />
@@ -432,18 +504,14 @@ export default function ApprovalsProposalAPage() {
         <div className={styles.content}>
           {isPermissionSection && activeDomainMeta ? (
             <>
-              {/* Domain header — title, setting key, action summary */}
+              {/* Domain header — single condensed row: icon, title, setting key, summary */}
               <div className={styles.domainHeader}>
-                <div className={styles.domainTitleRow}>
-                  <Codicon
-                    name={activeDomainMeta.icon}
-                    style={{ fontSize: 18, color: "var(--foreground-bright)" }}
-                  />
-                  <h1 className={styles.domainTitle}>{activeDomainMeta.label}</h1>
-                  <code className={styles.settingKey}>{activeDomainMeta.settingKey}</code>
-                </div>
-                <p className={styles.domainDescription}>{activeDomainMeta.description}</p>
-
+                <Codicon
+                  name={activeDomainMeta.icon}
+                  style={{ fontSize: 16, color: "var(--foreground-bright)", flexShrink: 0 }}
+                />
+                <h1 className={styles.domainTitle}>{activeDomainMeta.label}</h1>
+                <code className={styles.settingKey}>{activeDomainMeta.settingKey}</code>
                 <div className={styles.summaryRow}>
                   {activeDomain === "workspace" ? (
                     <>
@@ -536,9 +604,10 @@ export default function ApprovalsProposalAPage() {
 
               <div className={styles.footer}>
                 <span className={styles.footerText}>
+                  <span className={styles.footerDescription}>{activeDomainMeta.description}</span>{" "}
                   {activeDomain === "workspace" ? (
                     <>
-                      Paths grant access outside the open workspace. <code>read</code> permits inspection only; <code>read + write</code> allows edits.
+                      <code>read</code> permits inspection only; <code>read + write</code> allows edits.
                     </>
                   ) : (
                     <>

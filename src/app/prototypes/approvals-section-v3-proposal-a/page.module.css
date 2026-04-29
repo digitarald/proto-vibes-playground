@@ -172,22 +172,19 @@
   background: var(--background);
 }
 
-/* Domain header — title, setting key, summary chips */
+/* Domain header — single condensed row */
 .domainHeader {
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
-}
-
-.domainTitleRow {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
   flex-wrap: wrap;
 }
 
 .domainTitle {
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   color: var(--foreground-bright);
   margin: 0;
@@ -203,17 +200,11 @@
   padding: 2px 6px;
 }
 
-.domainDescription {
-  font-size: 0.8125rem;
-  color: var(--muted);
-  margin: 6px 0 12px;
-  line-height: 1.5;
-}
-
 .summaryRow {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .summaryChip {
@@ -428,74 +419,103 @@
 }
 
 /* ------------------------------------------------------------------ */
-/*  Tri-state segmented control (Deny | Ask | Allow)                   */
+/*  Action / Access dropdown (VS Code style)                           */
 /* ------------------------------------------------------------------ */
 
-.actionToggle {
-  display: inline-flex;
-  align-items: stretch;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--card);
-  overflow: hidden;
+.dropdownWrap {
+  position: relative;
   flex-shrink: 0;
 }
 
-.actionPill {
+.dropdownTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 3px 8px;
+  min-width: 96px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-family: inherit;
+  color: var(--foreground);
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.dropdownTrigger:hover {
+  background: var(--hover);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.dropdownTriggerOpen {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.dropdownTriggerLabel {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+}
+
+/* Trigger icon takes its color from the active variant */
+.trigger_allow .dropdownTriggerIcon { color: var(--success); }
+.trigger_ask   .dropdownTriggerIcon { color: var(--warning); }
+.trigger_deny  .dropdownTriggerIcon { color: var(--error); }
+.trigger_read  .dropdownTriggerIcon { color: var(--accent); }
+.trigger_write .dropdownTriggerIcon { color: var(--warning); }
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 3px);
+  right: 0;
+  min-width: 160px;
+  background: var(--chrome);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dropdownItem {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: 8px;
+  padding: 5px 8px;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.6875rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
   font-family: inherit;
-  color: var(--muted);
-  border-right: 1px solid var(--border);
-  transition: background 0.12s, color 0.12s;
-}
-
-.actionPill:last-child {
-  border-right: none;
-}
-
-.actionPill:hover {
   color: var(--foreground);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  width: 100%;
+}
+
+.dropdownItem:hover {
   background: var(--hover);
 }
 
-/* Active variants — fill with semantic color */
-.actionPill.actionActive.action_allow {
-  background: color-mix(in srgb, var(--success) 18%, transparent);
-  color: var(--success);
+.dropdownItemActive {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-.actionPill.actionActive.action_ask {
-  background: color-mix(in srgb, var(--warning) 18%, transparent);
-  color: var(--warning);
+.dropdownItemLabel {
+  flex: 1;
 }
 
-.actionPill.actionActive.action_deny {
-  background: color-mix(in srgb, var(--error) 18%, transparent);
-  color: var(--error);
-}
-
-/* Read = neutral accent (inspection only); Write = warning (escalates risk) */
-.actionPill.actionActive.access_read {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
-  color: var(--accent);
-}
-
-.actionPill.actionActive.access_write {
-  background: color-mix(in srgb, var(--warning) 18%, transparent);
-  color: var(--warning);
-}
-
-.actionPill.actionActive {
-  font-weight: 600;
-}
+/* Item icons use semantic color */
+.itemIcon_allow { color: var(--success); }
+.itemIcon_ask   { color: var(--warning); }
+.itemIcon_deny  { color: var(--error); }
+.itemIcon_read  { color: var(--accent); }
+.itemIcon_write { color: var(--warning); }
 
 /* Remove button */
 .removeBtn {
@@ -575,6 +595,11 @@
   font-size: 0.75rem;
   color: var(--muted);
   flex: 1;
+  line-height: 1.5;
+}
+
+.footerDescription {
+  color: var(--foreground);
 }
 
 .footerText code {
