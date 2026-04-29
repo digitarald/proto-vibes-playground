@@ -408,17 +408,6 @@ export default function ApprovalsProposalAPage() {
     return counts;
   }, [rules]);
 
-  /* Action breakdown for the active domain (for header summary) */
-  const actionBreakdown = useMemo(() => {
-    if (!activeDomain) return { allow: 0, ask: 0, deny: 0 };
-    const domainRules = rules.filter((r) => r.domain === activeDomain);
-    return {
-      allow: domainRules.filter((r) => r.action === "allow").length,
-      ask: domainRules.filter((r) => r.action === "ask").length,
-      deny: domainRules.filter((r) => r.action === "deny").length,
-    };
-  }, [rules, activeDomain]);
-
   const renderRules = (items: PermissionRule[]) =>
     items.map((rule) => (
       <RuleRow
@@ -504,43 +493,13 @@ export default function ApprovalsProposalAPage() {
         <div className={styles.content}>
           {isPermissionSection && activeDomainMeta ? (
             <>
-              {/* Domain header — single condensed row: icon, title, setting key, summary */}
+              {/* Domain header — icon + title only */}
               <div className={styles.domainHeader}>
                 <Codicon
                   name={activeDomainMeta.icon}
                   style={{ fontSize: 16, color: "var(--foreground-bright)", flexShrink: 0 }}
                 />
                 <h1 className={styles.domainTitle}>{activeDomainMeta.label}</h1>
-                <code className={styles.settingKey}>{activeDomainMeta.settingKey}</code>
-                <div className={styles.summaryRow}>
-                  {activeDomain === "workspace" ? (
-                    <>
-                      <span className={`${styles.summaryChip} ${styles.summaryRead}`}>
-                        <Codicon name="eye" style={{ fontSize: 11 }} />
-                        {rules.filter((r) => r.domain === "workspace" && r.access === "read").length} read
-                      </span>
-                      <span className={`${styles.summaryChip} ${styles.summaryWrite}`}>
-                        <Codicon name="edit" style={{ fontSize: 11 }} />
-                        {rules.filter((r) => r.domain === "workspace" && r.access === "write").length} read + write
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className={`${styles.summaryChip} ${styles.summaryAllow}`}>
-                        <Codicon name="pass-filled" style={{ fontSize: 11 }} />
-                        {actionBreakdown.allow} allow
-                      </span>
-                      <span className={`${styles.summaryChip} ${styles.summaryAsk}`}>
-                        <Codicon name="question" style={{ fontSize: 11 }} />
-                        {actionBreakdown.ask} ask
-                      </span>
-                      <span className={`${styles.summaryChip} ${styles.summaryDeny}`}>
-                        <Codicon name="circle-slash" style={{ fontSize: 11 }} />
-                        {actionBreakdown.deny} deny
-                      </span>
-                    </>
-                  )}
-                </div>
               </div>
 
               {/* Filter + add */}
