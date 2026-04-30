@@ -293,12 +293,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Source-specific accent colors */
-.sourceHeader_managed .sourceLabel { color: var(--warning); }
-.sourceHeader_managed > :first-child { color: var(--warning); }
-.sourceHeader_workspace .sourceLabel { color: var(--accent); }
-.sourceHeader_workspace > :first-child { color: var(--accent); }
-.sourceHeader_user .sourceLabel { color: var(--muted); }
+/* All section headers share the same muted treatment — priority is conveyed by
+   row order (managed first), the lock icon on managed rules, and the override note. */
 
 /* ------------------------------------------------------------------ */
 /*  Rule row                                                           */
@@ -344,23 +340,11 @@
   text-overflow: ellipsis;
 }
 
-.matchTag {
-  font-size: 0.625rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-radius: 3px;
-  padding: 1px 5px;
-  flex-shrink: 0;
-  font-weight: 600;
-}
-
-/* "→ Managed: deny" inline note on overridden rules */
+/* "→ 🔒 deny" inline note on overridden rules — source represented by its icon */
 .overrideNote {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   font-size: 0.6875rem;
   color: var(--warning);
   background: color-mix(in srgb, var(--warning) 10%, transparent);
@@ -378,8 +362,50 @@
 .controlsCell {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Post-approval checkbox (Network)                                   */
+/* ------------------------------------------------------------------ */
+
+.postCheckbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: var(--foreground);
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+
+.postCheckbox:hover {
+  background: var(--hover);
+}
+
+.postCheckbox input[type="checkbox"] {
+  accent-color: var(--accent);
+  margin: 0;
+  cursor: pointer;
+}
+
+.postCheckboxDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: var(--muted);
+}
+
+.postCheckboxDisabled:hover {
+  background: transparent;
+}
+
+.postCheckboxDisabled input[type="checkbox"] {
+  cursor: not-allowed;
 }
 
 /* ------------------------------------------------------------------ */

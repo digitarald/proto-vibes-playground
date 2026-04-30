@@ -199,11 +199,6 @@ const ACTION_OPTIONS = [
   { id: "allow" as const, label: "Allow", icon: "pass-filled", variant: "allow" },
 ];
 
-const POST_OPTIONS = [
-  { id: "ask" as const, label: "Review", icon: "shield", variant: "ask" },
-  { id: "allow" as const, label: "Trust", icon: "pass-filled", variant: "allow" },
-];
-
 const FILE_ACCESS_OPTIONS = [
   { id: "none" as const, label: "None", icon: "circle-slash", variant: "deny" },
   { id: "read" as const, label: "Read", icon: "eye", variant: "read" },
@@ -391,7 +386,13 @@ function RuleRow({
             style={{ fontSize: 12, color: "var(--muted)", flexShrink: 0 }}
           />
         )}
-        {isRegex && <span className={styles.matchTag}>regex</span>}
+        {isRegex && (
+          <Codicon
+            name="regex"
+            style={{ fontSize: 13, color: "var(--accent)", flexShrink: 0 }}
+            title="Regular expression"
+          />
+        )}
         {isExternal && (
           <Codicon
             name="folder"
@@ -399,14 +400,21 @@ function RuleRow({
           />
         )}
         <span className={styles.patternText}>{rule.pattern}</span>
-        {isOverridden && overrider && (
-          <span className={styles.overrideNote}>
-            <Codicon name="arrow-right" style={{ fontSize: 11 }} />
-            <span>
-              {SOURCES.find((s) => s.id === overrider.source)?.label}: {summarizeRuleEffect(overrider)}
+        {isOverridden && overrider && (() => {
+          const overriderMeta = SOURCES.find((s) => s.id === overrider.source);
+          return (
+            <span
+              className={styles.overrideNote}
+              title={`Overridden by ${overriderMeta?.label} rule`}
+            >
+              <Codicon name="arrow-right" style={{ fontSize: 11 }} />
+              {overriderMeta && (
+                <Codicon name={overriderMeta.icon} style={{ fontSize: 11 }} />
+              )}
+              <span>{summarizeRuleEffect(overrider)}</span>
             </span>
-          </span>
-        )}
+          );
+        })()}
       </div>
 
       <div className={styles.controlsCell}>
@@ -436,14 +444,18 @@ function RuleRow({
           />
         )}
         {isFetch && (
-          <Dropdown<Exclude<RuleAction, "deny">>
-            value={rule.postApproval ?? "ask"}
-            onChange={onPostApprovalChange}
-            options={POST_OPTIONS}
-            ariaLabel="Post-response review"
-            size="sm"
-            disabled={isManaged || isOverridden || rule.action === "deny"}
-          />
+          <label
+            className={`${styles.postCheckbox} ${(isManaged || isOverridden || rule.action === "deny") ? styles.postCheckboxDisabled : ""}`}
+            title="When unchecked, the agent reviews the response for prompt injection before using it."
+          >
+            <input
+              type="checkbox"
+              checked={(rule.postApproval ?? "ask") === "allow"}
+              disabled={isManaged || isOverridden || rule.action === "deny"}
+              onChange={(e) => onPostApprovalChange(e.target.checked ? "allow" : "ask")}
+            />
+            <span>Trust response</span>
+          </label>
         )}
       </div>
 
