@@ -1,7 +1,7 @@
 {
-  "title": "Approvals Section (Merged Files)",
-  "description": "Variant that merges File Reads and File Edits into a single Files permission panel with per-rule access (none/read/edit).",
+  "title": "Approvals Section (Merged Files + Hierarchy)",
+  "description": "Merges File Reads + File Edits into one Files panel with per-rule access (none/read/edit). Adds User → Workspace → Managed source hierarchy with override visualization, locked managed rules, and Network post-approval review.",
   "author": "Harald Kirschner",
-  "tags": ["ai-customization", "approvals", "permissions", "proposal-a"],
-  "createdAt": "2026-04-27"
+  "tags": ["ai-customization", "approvals", "permissions", "proposal-a", "policy", "hierarchy"],
+  "createdAt": "2026-04-30"
 }

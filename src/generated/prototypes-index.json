@@ -1,5 +1,26 @@
 [
   {
+    "slug": "approvals-section-v4-merged-files",
+    "title": "Approvals Section (Merged Files + Hierarchy)",
+    "description": "Merges File Reads + File Edits into one Files panel with per-rule access (none/read/edit). Adds User → Workspace → Managed source hierarchy with override visualization, locked managed rules, and Network post-approval review.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "ai-customization",
+      "approvals",
+      "permissions",
+      "proposal-a",
+      "policy",
+      "hierarchy"
+    ],
+    "createdAt": "2026-04-30",
+    "hasDesign": false,
+    "variant": {
+      "parentSlug": "approvals-section",
+      "version": 4,
+      "descriptor": "merged-files"
+    }
+  },
+  {
     "slug": "approvals-section-v3-proposal-a",
     "title": "Approvals Section (Proposal A)",
     "description": "Variant exploring Proposal A: unified chat.tools.<domain>.rules settings with explicit deny/ask/allow tri-state per rule.",
@@ -16,25 +37,6 @@
       "parentSlug": "approvals-section",
       "version": 3,
       "descriptor": "proposal-a"
-    }
-  },
-  {
-    "slug": "approvals-section-v4-merged-files",
-    "title": "Approvals Section (Merged Files)",
-    "description": "Variant that merges File Reads and File Edits into a single Files permission panel with per-rule access (none/read/edit).",
-    "author": "Harald Kirschner",
-    "tags": [
-      "ai-customization",
-      "approvals",
-      "permissions",
-      "proposal-a"
-    ],
-    "createdAt": "2026-04-27",
-    "hasDesign": false,
-    "variant": {
-      "parentSlug": "approvals-section",
-      "version": 4,
-      "descriptor": "merged-files"
     }
   },
   {

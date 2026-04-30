@@ -1,37 +1,39 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Codicon } from "../../components/codicon";
 import styles from "./page.module.css";
 
 /* ------------------------------------------------------------------ */
-/*  Data types — unified rule primitive (Proposal A)                   */
+/*  Data types                                                         */
 /* ------------------------------------------------------------------ */
 
 type RuleAction = "allow" | "ask" | "deny";
-type AccessLevel = "read" | "write";
-type RuleScope = "workspace" | "user";
+type FileAccess = "none" | "read" | "edit";
+type ExternalAccess = "read" | "write";
+type RuleSource = "user" | "workspace" | "managed";
 type PermissionDomain =
   | "terminal"
-  | "edits"
-  | "read"
+  | "files"
   | "fetch"
   | "mcp"
   | "builtin"
-  | "workspace";
+  | "external";
 
 interface PermissionRule {
   id: string;
   domain: PermissionDomain;
-  /** Pattern syntax depends on domain (glob, regex, URL, server:tool, tool-id, path) */
+  source: RuleSource;
   pattern: string;
-  /** allow/ask/deny for tri-state domains; undefined for the workspace domain */
+  /** allow/ask/deny for tri-state domains (terminal, fetch, mcp, builtin) */
   action?: RuleAction;
-  /** read/write for the external folder access domain; undefined for tri-state domains */
-  access?: AccessLevel;
-  scope: RuleScope;
-  /** For terminal/edits/read — distinguishes glob vs regex */
-  matchType?: "glob" | "regex" | "exact";
+  /** none/read/edit for the merged Files domain */
+  fileAccess?: FileAccess;
+  /** read/write for the External Folders domain */
+  externalAccess?: ExternalAccess;
+  /** Network-only: post-execution response review (allow = trust response, ask = review for prompt injection) */
+  postApproval?: Exclude<RuleAction, "deny">;
+  matchType?: "glob" | "regex";
 }
 
 type CustomizationSection =
@@ -46,15 +48,27 @@ type CustomizationSection =
 type SidebarSection = CustomizationSection | `domain-${PermissionDomain}`;
 
 /* ------------------------------------------------------------------ */
-/*  Mock data                                                          */
+/*  Constants                                                          */
 /* ------------------------------------------------------------------ */
+
+/** Highest priority wins. Managed > Workspace > User. */
+const SOURCE_PRIORITY: Record<RuleSource, number> = {
+  managed: 3,
+  workspace: 2,
+  user: 1,
+};
+
+const SOURCES: { id: RuleSource; label: string; icon: string; description: string }[] = [
+  { id: "managed", label: "Managed", icon: "lock", description: "Enterprise policy — cannot be overridden" },
+  { id: "workspace", label: "Workspace", icon: "folder-active", description: "Project-level settings" },
+  { id: "user", label: "User", icon: "person", description: "Personal defaults" },
+];
 
 const PERMISSION_DOMAINS: {
   id: PermissionDomain;
   label: string;
   icon: string;
   settingKey: string;
-  patternHint: string;
   description: string;
 }[] = [
   {
@@ -62,39 +76,27 @@ const PERMISSION_DOMAINS: {
     label: "Terminal",
     icon: "terminal",
     settingKey: "chat.tools.terminal.rules",
-    patternHint: "Subcommand glob or /regex/",
     description: "Control which terminal commands run automatically.",
   },
   {
-    id: "edits",
-    label: "File Edits",
-    icon: "edit",
-    settingKey: "chat.tools.edits.rules",
-    patternHint: "Glob pattern (e.g. src/**)",
-    description: "Control which files the agent may edit.",
-  },
-  {
-    id: "read",
-    label: "File Reads",
+    id: "files",
+    label: "Files",
     icon: "file",
-    settingKey: "chat.tools.read.rules",
-    patternHint: "Glob pattern (e.g. .env*)",
-    description: "Control which files the agent can read.",
+    settingKey: "chat.tools.files.rules",
+    description: "Per-rule access to files in the workspace. None blocks the agent, Read allows inspection, Edit allows changes.",
   },
   {
     id: "fetch",
     label: "Network",
     icon: "globe",
     settingKey: "chat.tools.fetch.rules",
-    patternHint: "Domain or URL pattern",
-    description: "Control which URLs and domains the agent can access.",
+    description: "Control which URLs the agent can request, plus whether responses need review for prompt injection.",
   },
   {
     id: "mcp",
     label: "MCP Tools",
     icon: "server",
     settingKey: "chat.tools.mcp.rules",
-    patternHint: "server:tool_name or server:*",
     description: "Control which MCP server tools may run.",
   },
   {
@@ -102,65 +104,83 @@ const PERMISSION_DOMAINS: {
     label: "Built-in Tools",
     icon: "tools",
     settingKey: "chat.tools.builtin.rules",
-    patternHint: "Tool ID (e.g. fetch_webpage)",
     description: "Control built-in tools with side effects — fetch, browser, notebook, tasks. File and terminal access are managed in their own sections.",
   },
   {
-    id: "workspace",
+    id: "external",
     label: "External Folders",
     icon: "folder-opened",
-    settingKey: "chat.tools.workspace.rules",
-    patternHint: "Path to a folder outside the workspace",
+    settingKey: "chat.tools.external.rules",
     description: "Extend the agent's reach to folders outside the open workspace. Grant read-only or full read+write access per path.",
   },
 ];
 
+/* ------------------------------------------------------------------ */
+/*  Mock data                                                          */
+/* ------------------------------------------------------------------ */
+
 const INITIAL_RULES: PermissionRule[] = [
-  // Terminal
-  { id: "t-npm", domain: "terminal", pattern: "npm run *", action: "allow", scope: "workspace" },
-  { id: "t-git-status", domain: "terminal", pattern: "git status", action: "allow", scope: "workspace" },
-  { id: "t-git-show", domain: "terminal", pattern: "git show *", action: "allow", scope: "workspace" },
-  { id: "t-git-push", domain: "terminal", pattern: "git push *", action: "ask", scope: "workspace" },
-  { id: "t-curl", domain: "terminal", pattern: "curl *", action: "deny", scope: "user" },
-  { id: "t-rm", domain: "terminal", pattern: "rm -rf *", action: "deny", scope: "user" },
-  { id: "t-sudo", domain: "terminal", pattern: "^sudo\\s+", action: "deny", scope: "user", matchType: "regex" },
-  // Edits
-  { id: "e-src", domain: "edits", pattern: "src/**", action: "allow", scope: "workspace" },
-  { id: "e-tests", domain: "edits", pattern: "tests/**", action: "allow", scope: "workspace" },
-  { id: "e-pkg", domain: "edits", pattern: "**/package.json", action: "ask", scope: "workspace" },
-  { id: "e-lock", domain: "edits", pattern: "**/package-lock.json", action: "ask", scope: "workspace" },
-  { id: "e-git", domain: "edits", pattern: "**/.git/**", action: "deny", scope: "user" },
-  { id: "e-env", domain: "edits", pattern: "**/.env*", action: "deny", scope: "user" },
-  // Read
-  { id: "r-env", domain: "read", pattern: ".env*", action: "deny", scope: "user" },
-  { id: "r-secrets", domain: "read", pattern: "**/secrets/**", action: "deny", scope: "user" },
-  { id: "r-credentials", domain: "read", pattern: "**/credentials/**", action: "deny", scope: "user" },
-  { id: "r-git", domain: "read", pattern: "**/.git/**", action: "deny", scope: "user" },
-  // Fetch
-  { id: "f-vscode", domain: "fetch", pattern: "code.visualstudio.com/*", action: "allow", scope: "workspace" },
-  { id: "f-gh", domain: "fetch", pattern: "github.com/*", action: "allow", scope: "workspace" },
-  { id: "f-npm", domain: "fetch", pattern: "*.npmjs.org", action: "allow", scope: "workspace" },
-  { id: "f-internal", domain: "fetch", pattern: "*.internal.corp", action: "deny", scope: "user" },
-  { id: "f-so", domain: "fetch", pattern: "stackoverflow.com/*", action: "allow", scope: "user" },
-  { id: "f-mdn", domain: "fetch", pattern: "developer.mozilla.org/*", action: "allow", scope: "user" },
-  // MCP
-  { id: "m-gh-all", domain: "mcp", pattern: "github:*", action: "allow", scope: "workspace" },
-  { id: "m-gh-merge", domain: "mcp", pattern: "github:merge_pull_request", action: "ask", scope: "workspace" },
-  { id: "m-gh-delete", domain: "mcp", pattern: "github:delete_*", action: "deny", scope: "workspace" },
-  { id: "m-perplexity", domain: "mcp", pattern: "perplexity:*", action: "allow", scope: "workspace" },
-  { id: "m-memory", domain: "mcp", pattern: "memory:*", action: "allow", scope: "user" },
-  { id: "m-excalidraw", domain: "mcp", pattern: "excalidraw:*", action: "allow", scope: "user" },
-  // Built-in (only tools with side effects — file edits/reads live in their own domains)
-  { id: "b-task", domain: "builtin", pattern: "run_task", action: "ask", scope: "workspace" },
-  { id: "b-fetch", domain: "builtin", pattern: "fetch_webpage", action: "allow", scope: "user" },
-  { id: "b-notebook", domain: "builtin", pattern: "run_notebook_cell", action: "ask", scope: "user" },
-  { id: "b-browser", domain: "builtin", pattern: "open_browser_page", action: "allow", scope: "user" },
-  // External folder access (read-only or read+write to folders outside the workspace)
-  { id: "w-docs", domain: "workspace", pattern: "../docs/", access: "read", scope: "workspace" },
-  { id: "w-shared", domain: "workspace", pattern: "../shared-libs/", access: "write", scope: "workspace" },
-  { id: "w-design", domain: "workspace", pattern: "~/Design/proto-vibes-playground/", access: "read", scope: "workspace" },
-  { id: "w-notes", domain: "workspace", pattern: "~/Notes/", access: "read", scope: "user" },
-  { id: "w-scratch", domain: "workspace", pattern: "~/scratch/", access: "write", scope: "user" },
+  // ── Terminal ──
+  // Managed enforces blanket bans
+  { id: "t-rm-mgd", domain: "terminal", pattern: "rm -rf *", action: "deny", source: "managed" },
+  { id: "t-sudo-mgd", domain: "terminal", pattern: "^sudo\\s+", action: "deny", source: "managed", matchType: "regex" },
+  // Workspace overrides — git push gets force-denied by managed below
+  { id: "t-npm", domain: "terminal", pattern: "npm run *", action: "allow", source: "workspace" },
+  { id: "t-git-status", domain: "terminal", pattern: "git status", action: "allow", source: "workspace" },
+  { id: "t-git-show", domain: "terminal", pattern: "git show *", action: "allow", source: "workspace" },
+  { id: "t-git-push-ws", domain: "terminal", pattern: "git push *", action: "allow", source: "workspace" },
+  // Managed forces git push to ask (overrides the workspace allow above)
+  { id: "t-git-push-mgd", domain: "terminal", pattern: "git push *", action: "ask", source: "managed" },
+  // User defaults
+  { id: "t-curl", domain: "terminal", pattern: "curl *", action: "deny", source: "user" },
+  { id: "t-rm-user", domain: "terminal", pattern: "rm -rf *", action: "deny", source: "user" },
+
+  // ── Files (merged Reads + Edits, per-rule access) ──
+  // Managed locks down secrets entirely
+  { id: "f-env-mgd", domain: "files", pattern: "**/.env*", fileAccess: "none", source: "managed" },
+  { id: "f-secrets-mgd", domain: "files", pattern: "**/secrets/**", fileAccess: "none", source: "managed" },
+  // Workspace permits edits to source/tests, read-only for lockfiles
+  { id: "f-src", domain: "files", pattern: "src/**", fileAccess: "edit", source: "workspace" },
+  { id: "f-tests", domain: "files", pattern: "tests/**", fileAccess: "edit", source: "workspace" },
+  { id: "f-pkg", domain: "files", pattern: "**/package.json", fileAccess: "read", source: "workspace" },
+  { id: "f-lock", domain: "files", pattern: "**/package-lock.json", fileAccess: "read", source: "workspace" },
+  // Workspace tries to allow .env reads — overridden by managed "none"
+  { id: "f-env-ws", domain: "files", pattern: "**/.env*", fileAccess: "read", source: "workspace" },
+  // User adds personal denies
+  { id: "f-git-user", domain: "files", pattern: "**/.git/**", fileAccess: "none", source: "user" },
+  { id: "f-creds", domain: "files", pattern: "**/credentials/**", fileAccess: "none", source: "user" },
+
+  // ── Network ──
+  { id: "n-internal-mgd", domain: "fetch", pattern: "*.internal.corp", action: "deny", source: "managed", postApproval: "ask" },
+  { id: "n-prod-mgd", domain: "fetch", pattern: "*.prod.corp", action: "ask", source: "managed", postApproval: "ask" },
+  { id: "n-vscode", domain: "fetch", pattern: "code.visualstudio.com/*", action: "allow", source: "workspace", postApproval: "allow" },
+  { id: "n-gh", domain: "fetch", pattern: "github.com/*", action: "allow", source: "workspace", postApproval: "ask" },
+  { id: "n-npm", domain: "fetch", pattern: "*.npmjs.org", action: "allow", source: "workspace", postApproval: "allow" },
+  { id: "n-internal-ws", domain: "fetch", pattern: "*.internal.corp", action: "allow", source: "workspace", postApproval: "allow" },
+  { id: "n-so", domain: "fetch", pattern: "stackoverflow.com/*", action: "allow", source: "user", postApproval: "ask" },
+  { id: "n-mdn", domain: "fetch", pattern: "developer.mozilla.org/*", action: "allow", source: "user", postApproval: "ask" },
+
+  // ── MCP ──
+  { id: "m-delete-mgd", domain: "mcp", pattern: "github:delete_*", action: "deny", source: "managed" },
+  { id: "m-gh-all", domain: "mcp", pattern: "github:*", action: "allow", source: "workspace" },
+  { id: "m-gh-merge", domain: "mcp", pattern: "github:merge_pull_request", action: "ask", source: "workspace" },
+  { id: "m-perplexity", domain: "mcp", pattern: "perplexity:*", action: "allow", source: "workspace" },
+  { id: "m-memory", domain: "mcp", pattern: "memory:*", action: "allow", source: "user" },
+  { id: "m-excalidraw", domain: "mcp", pattern: "excalidraw:*", action: "allow", source: "user" },
+
+  // ── Built-in ──
+  { id: "b-task", domain: "builtin", pattern: "run_task", action: "ask", source: "workspace" },
+  { id: "b-fetch", domain: "builtin", pattern: "fetch_webpage", action: "allow", source: "user" },
+  { id: "b-notebook", domain: "builtin", pattern: "run_notebook_cell", action: "ask", source: "user" },
+  { id: "b-browser", domain: "builtin", pattern: "open_browser_page", action: "allow", source: "user" },
+
+  // ── External Folders ──
+  { id: "e-shared-mgd", domain: "external", pattern: "/etc/", externalAccess: "read", source: "managed" },
+  { id: "e-docs", domain: "external", pattern: "../docs/", externalAccess: "read", source: "workspace" },
+  { id: "e-shared", domain: "external", pattern: "../shared-libs/", externalAccess: "write", source: "workspace" },
+  { id: "e-design", domain: "external", pattern: "~/Design/proto-vibes-playground/", externalAccess: "read", source: "workspace" },
+  { id: "e-notes", domain: "external", pattern: "~/Notes/", externalAccess: "read", source: "user" },
+  { id: "e-scratch", domain: "external", pattern: "~/scratch/", externalAccess: "write", source: "user" },
 ];
 
 const CUSTOMIZATION_ITEMS: { id: CustomizationSection; label: string; icon: string; count: number }[] = [
@@ -173,114 +193,281 @@ const CUSTOMIZATION_ITEMS: { id: CustomizationSection; label: string; icon: stri
   { id: "plugins", label: "Plugins", icon: "extensions", count: 3 },
 ];
 
-const ACTIONS: { id: RuleAction; label: string; icon: string }[] = [
-  { id: "deny", label: "Deny", icon: "circle-slash" },
-  { id: "ask", label: "Ask", icon: "question" },
-  { id: "allow", label: "Allow", icon: "pass-filled" },
+const ACTION_OPTIONS = [
+  { id: "deny" as const, label: "Deny", icon: "circle-slash", variant: "deny" },
+  { id: "ask" as const, label: "Ask", icon: "question", variant: "ask" },
+  { id: "allow" as const, label: "Allow", icon: "pass-filled", variant: "allow" },
 ];
 
-const ACCESS_LEVELS: { id: AccessLevel; label: string; icon: string }[] = [
-  { id: "read", label: "Read", icon: "eye" },
-  { id: "write", label: "Read + Write", icon: "edit" },
+const POST_OPTIONS = [
+  { id: "ask" as const, label: "Review", icon: "shield", variant: "ask" },
+  { id: "allow" as const, label: "Trust", icon: "pass-filled", variant: "allow" },
+];
+
+const FILE_ACCESS_OPTIONS = [
+  { id: "none" as const, label: "None", icon: "circle-slash", variant: "deny" },
+  { id: "read" as const, label: "Read", icon: "eye", variant: "read" },
+  { id: "edit" as const, label: "Edit", icon: "edit", variant: "write" },
+];
+
+const EXTERNAL_ACCESS_OPTIONS = [
+  { id: "read" as const, label: "Read", icon: "eye", variant: "read" },
+  { id: "write" as const, label: "Read + Write", icon: "edit", variant: "write" },
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Components                                                         */
+/*  Override resolution                                                */
 /* ------------------------------------------------------------------ */
 
-function ActionToggle({
+/** For a rule, find the highest-priority rule with the same (domain, pattern). Returns null if none beats it. */
+function findOverrider(rule: PermissionRule, all: PermissionRule[]): PermissionRule | null {
+  const myPriority = SOURCE_PRIORITY[rule.source];
+  let winner: PermissionRule | null = null;
+  for (const other of all) {
+    if (other.id === rule.id) continue;
+    if (other.domain !== rule.domain) continue;
+    if (other.pattern !== rule.pattern) continue;
+    if (SOURCE_PRIORITY[other.source] > myPriority) {
+      if (!winner || SOURCE_PRIORITY[other.source] > SOURCE_PRIORITY[winner.source]) {
+        winner = other;
+      }
+    }
+  }
+  return winner;
+}
+
+function summarizeRuleEffect(rule: PermissionRule): string {
+  if (rule.action) return rule.action;
+  if (rule.fileAccess) return rule.fileAccess;
+  if (rule.externalAccess) return rule.externalAccess;
+  return "—";
+}
+
+/* ------------------------------------------------------------------ */
+/*  Dropdown component                                                 */
+/* ------------------------------------------------------------------ */
+
+interface DropdownOption<T extends string> {
+  id: T;
+  label: string;
+  icon: string;
+  variant: string;
+}
+
+function Dropdown<T extends string>({
   value,
   onChange,
+  options,
+  ariaLabel,
+  size = "md",
+  disabled = false,
 }: {
-  value: RuleAction;
-  onChange: (next: RuleAction) => void;
+  value: T;
+  onChange: (next: T) => void;
+  options: DropdownOption<T>[];
+  ariaLabel: string;
+  size?: "md" | "sm";
+  disabled?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const current = options.find((o) => o.id === value) ?? options[0];
+
+  useEffect(() => {
+    if (!open) return;
+    function handleDown(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handleDown);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleDown);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
   return (
-    <div className={styles.actionToggle} role="radiogroup" aria-label="Rule action">
-      {ACTIONS.map((a) => (
-        <button
-          key={a.id}
-          className={`${styles.actionPill} ${styles[`action_${a.id}`]} ${value === a.id ? styles.actionActive : ""}`}
-          onClick={() => onChange(a.id)}
-          aria-pressed={value === a.id}
-          title={a.label}
-        >
-          <Codicon name={a.icon} style={{ fontSize: 11 }} />
-          <span>{a.label}</span>
-        </button>
-      ))}
+    <div className={styles.dropdownWrap} ref={wrapRef}>
+      <button
+        type="button"
+        className={`${styles.dropdownTrigger} ${styles[`trigger_${current.variant}`]} ${size === "sm" ? styles.dropdownSm : ""} ${open ? styles.dropdownTriggerOpen : ""} ${disabled ? styles.dropdownDisabled : ""}`}
+        onClick={(e) => {
+          if (disabled) return;
+          e.stopPropagation();
+          setOpen((o) => !o);
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        disabled={disabled}
+      >
+        <Codicon
+          name={current.icon}
+          style={{ fontSize: 12 }}
+          className={styles.dropdownTriggerIcon}
+        />
+        <span className={styles.dropdownTriggerLabel}>{current.label}</span>
+        {!disabled && (
+          <Codicon
+            name="chevron-down"
+            style={{ fontSize: 11, color: "var(--muted)" }}
+          />
+        )}
+      </button>
+      {open && (
+        <div className={styles.dropdownMenu} role="listbox">
+          {options.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              role="option"
+              aria-selected={o.id === value}
+              className={`${styles.dropdownItem} ${o.id === value ? styles.dropdownItemActive : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(o.id);
+                setOpen(false);
+              }}
+            >
+              <Codicon
+                name={o.icon}
+                style={{ fontSize: 13 }}
+                className={styles[`itemIcon_${o.variant}`]}
+              />
+              <span className={styles.dropdownItemLabel}>{o.label}</span>
+              {o.id === value && (
+                <Codicon
+                  name="check"
+                  style={{ fontSize: 12, color: "var(--accent)" }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function AccessToggle({
-  value,
-  onChange,
-}: {
-  value: AccessLevel;
-  onChange: (next: AccessLevel) => void;
-}) {
-  return (
-    <div className={styles.actionToggle} role="radiogroup" aria-label="Folder access">
-      {ACCESS_LEVELS.map((a) => (
-        <button
-          key={a.id}
-          className={`${styles.actionPill} ${styles[`access_${a.id}`]} ${value === a.id ? styles.actionActive : ""}`}
-          onClick={() => onChange(a.id)}
-          aria-pressed={value === a.id}
-          title={a.label}
-        >
-          <Codicon name={a.icon} style={{ fontSize: 11 }} />
-          <span>{a.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
+/* ------------------------------------------------------------------ */
+/*  Rule row                                                           */
+/* ------------------------------------------------------------------ */
 
 function RuleRow({
   rule,
+  overrider,
   onActionChange,
-  onAccessChange,
+  onPostApprovalChange,
+  onFileAccessChange,
+  onExternalAccessChange,
   onRemove,
 }: {
   rule: PermissionRule;
+  overrider: PermissionRule | null;
   onActionChange: (action: RuleAction) => void;
-  onAccessChange: (access: AccessLevel) => void;
+  onPostApprovalChange: (action: Exclude<RuleAction, "deny">) => void;
+  onFileAccessChange: (access: FileAccess) => void;
+  onExternalAccessChange: (access: ExternalAccess) => void;
   onRemove: () => void;
 }) {
   const isRegex = rule.matchType === "regex";
-  const isWorkspaceDomain = rule.domain === "workspace";
+  const isManaged = rule.source === "managed";
+  const isOverridden = overrider !== null;
+  const isFiles = rule.domain === "files";
+  const isExternal = rule.domain === "external";
+  const isFetch = rule.domain === "fetch";
+
   return (
-    <div className={styles.ruleRow}>
+    <div
+      className={`${styles.ruleRow} ${isOverridden ? styles.ruleRowOverridden : ""}`}
+    >
       <div className={styles.patternCell}>
+        {isManaged && (
+          <Codicon
+            name="lock"
+            style={{ fontSize: 12, color: "var(--muted)", flexShrink: 0 }}
+          />
+        )}
         {isRegex && <span className={styles.matchTag}>regex</span>}
-        {isWorkspaceDomain && (
+        {isExternal && (
           <Codicon
             name="folder"
             style={{ fontSize: 14, color: "var(--muted)", flexShrink: 0 }}
           />
         )}
         <span className={styles.patternText}>{rule.pattern}</span>
+        {isOverridden && overrider && (
+          <span className={styles.overrideNote}>
+            <Codicon name="arrow-right" style={{ fontSize: 11 }} />
+            <span>
+              {SOURCES.find((s) => s.id === overrider.source)?.label}: {summarizeRuleEffect(overrider)}
+            </span>
+          </span>
+        )}
       </div>
-      {isWorkspaceDomain ? (
-        <AccessToggle value={rule.access ?? "read"} onChange={onAccessChange} />
-      ) : (
-        <ActionToggle value={rule.action ?? "ask"} onChange={onActionChange} />
+
+      <div className={styles.controlsCell}>
+        {isFiles ? (
+          <Dropdown<FileAccess>
+            value={rule.fileAccess ?? "none"}
+            onChange={onFileAccessChange}
+            options={FILE_ACCESS_OPTIONS}
+            ariaLabel="File access"
+            disabled={isManaged || isOverridden}
+          />
+        ) : isExternal ? (
+          <Dropdown<ExternalAccess>
+            value={rule.externalAccess ?? "read"}
+            onChange={onExternalAccessChange}
+            options={EXTERNAL_ACCESS_OPTIONS}
+            ariaLabel="External folder access"
+            disabled={isManaged || isOverridden}
+          />
+        ) : (
+          <Dropdown<RuleAction>
+            value={rule.action ?? "ask"}
+            onChange={onActionChange}
+            options={ACTION_OPTIONS}
+            ariaLabel="Pre-execution action"
+            disabled={isManaged || isOverridden}
+          />
+        )}
+        {isFetch && (
+          <Dropdown<Exclude<RuleAction, "deny">>
+            value={rule.postApproval ?? "ask"}
+            onChange={onPostApprovalChange}
+            options={POST_OPTIONS}
+            ariaLabel="Post-response review"
+            size="sm"
+            disabled={isManaged || isOverridden || rule.action === "deny"}
+          />
+        )}
+      </div>
+
+      {!isManaged && (
+        <button className={styles.removeBtn} onClick={onRemove} aria-label="Remove rule">
+          <Codicon name="trash" style={{ fontSize: 14 }} />
+        </button>
       )}
-      <button className={styles.removeBtn} onClick={onRemove} aria-label="Remove rule">
-        <Codicon name="trash" style={{ fontSize: 14 }} />
-      </button>
     </div>
   );
 }
 
-function ScopeGroup({ label, count }: { label: string; count: number }) {
+/* ------------------------------------------------------------------ */
+/*  Source group header                                                */
+/* ------------------------------------------------------------------ */
+
+function SourceGroup({ source, count }: { source: RuleSource; count: number }) {
+  const meta = SOURCES.find((s) => s.id === source)!;
   return (
-    <div className={styles.scopeHeader}>
-      <Codicon name="chevron-down" style={{ color: "var(--muted)", fontSize: 14 }} />
-      <span className={styles.scopeLabel}>{label}</span>
-      <span className={styles.scopeCount}>{count}</span>
+    <div className={`${styles.sourceHeader} ${styles[`sourceHeader_${source}`]}`}>
+      <Codicon name={meta.icon} style={{ fontSize: 12 }} />
+      <span className={styles.sourceLabel}>{meta.label}</span>
+      <span className={styles.sourceDesc}>{meta.description}</span>
+      <span className={styles.sourceCount}>{count}</span>
     </div>
   );
 }
@@ -289,7 +476,7 @@ function ScopeGroup({ label, count }: { label: string; count: number }) {
 /*  Main page                                                          */
 /* ------------------------------------------------------------------ */
 
-export default function ApprovalsProposalAPage() {
+export default function ApprovalsMergedFilesPage() {
   const [activeSection, setActiveSection] = useState<SidebarSection>("domain-terminal");
   const [rules, setRules] = useState<PermissionRule[]>(INITIAL_RULES);
   const [searchQuery, setSearchQuery] = useState("");
@@ -298,22 +485,29 @@ export default function ApprovalsProposalAPage() {
   const activeDomain: PermissionDomain | null = isPermissionSection
     ? (activeSection.replace("domain-", "") as PermissionDomain)
     : null;
-
   const activeDomainMeta = PERMISSION_DOMAINS.find((d) => d.id === activeDomain);
 
   const changeAction = useCallback((id: string, action: RuleAction) => {
     setRules((prev) => prev.map((r) => (r.id === id ? { ...r, action } : r)));
   }, []);
 
-  const changeAccess = useCallback((id: string, access: AccessLevel) => {
-    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, access } : r)));
+  const changePostApproval = useCallback((id: string, postApproval: Exclude<RuleAction, "deny">) => {
+    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, postApproval } : r)));
+  }, []);
+
+  const changeFileAccess = useCallback((id: string, fileAccess: FileAccess) => {
+    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, fileAccess } : r)));
+  }, []);
+
+  const changeExternalAccess = useCallback((id: string, externalAccess: ExternalAccess) => {
+    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, externalAccess } : r)));
   }, []);
 
   const removeRule = useCallback((id: string) => {
     setRules((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
-  /* Filter rules to current domain + search */
+  /* Filter to active domain + search */
   const visibleRules = useMemo(() => {
     if (!activeDomain) return [];
     let result = rules.filter((r) => r.domain === activeDomain);
@@ -324,10 +518,16 @@ export default function ApprovalsProposalAPage() {
     return result;
   }, [rules, activeDomain, searchQuery]);
 
-  const workspaceRules = visibleRules.filter((r) => r.scope === "workspace");
-  const userRules = visibleRules.filter((r) => r.scope === "user");
+  /* Group by source: managed → workspace → user */
+  const groupedRules = useMemo(() => {
+    const order: RuleSource[] = ["managed", "workspace", "user"];
+    return order.map((source) => ({
+      source,
+      rules: visibleRules.filter((r) => r.source === source),
+    }));
+  }, [visibleRules]);
 
-  /* Counts per domain for the sidebar */
+  /* Sidebar counts */
   const domainCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const d of PERMISSION_DOMAINS) {
@@ -336,27 +536,22 @@ export default function ApprovalsProposalAPage() {
     return counts;
   }, [rules]);
 
-  /* Action breakdown for the active domain (for header summary) */
-  const actionBreakdown = useMemo(() => {
-    if (!activeDomain) return { allow: 0, ask: 0, deny: 0 };
-    const domainRules = rules.filter((r) => r.domain === activeDomain);
-    return {
-      allow: domainRules.filter((r) => r.action === "allow").length,
-      ask: domainRules.filter((r) => r.action === "ask").length,
-      deny: domainRules.filter((r) => r.action === "deny").length,
-    };
-  }, [rules, activeDomain]);
-
   const renderRules = (items: PermissionRule[]) =>
-    items.map((rule) => (
-      <RuleRow
-        key={rule.id}
-        rule={rule}
-        onActionChange={(action) => changeAction(rule.id, action)}
-        onAccessChange={(access) => changeAccess(rule.id, access)}
-        onRemove={() => removeRule(rule.id)}
-      />
-    ));
+    items.map((rule) => {
+      const overrider = findOverrider(rule, rules);
+      return (
+        <RuleRow
+          key={rule.id}
+          rule={rule}
+          overrider={overrider}
+          onActionChange={(action) => changeAction(rule.id, action)}
+          onPostApprovalChange={(p) => changePostApproval(rule.id, p)}
+          onFileAccessChange={(a) => changeFileAccess(rule.id, a)}
+          onExternalAccessChange={(a) => changeExternalAccess(rule.id, a)}
+          onRemove={() => removeRule(rule.id)}
+        />
+      );
+    });
 
   return (
     <div className={styles.scene}>
@@ -380,7 +575,7 @@ export default function ApprovalsProposalAPage() {
       </div>
 
       <div className={styles.editorBody}>
-        {/* Sidebar — split into Customizations / Permissions */}
+        {/* Sidebar */}
         <nav className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
             <div className={styles.scopeSelector}>
@@ -432,50 +627,14 @@ export default function ApprovalsProposalAPage() {
         <div className={styles.content}>
           {isPermissionSection && activeDomainMeta ? (
             <>
-              {/* Domain header — title, setting key, action summary */}
               <div className={styles.domainHeader}>
-                <div className={styles.domainTitleRow}>
-                  <Codicon
-                    name={activeDomainMeta.icon}
-                    style={{ fontSize: 18, color: "var(--foreground-bright)" }}
-                  />
-                  <h1 className={styles.domainTitle}>{activeDomainMeta.label}</h1>
-                  <code className={styles.settingKey}>{activeDomainMeta.settingKey}</code>
-                </div>
-                <p className={styles.domainDescription}>{activeDomainMeta.description}</p>
-
-                <div className={styles.summaryRow}>
-                  {activeDomain === "workspace" ? (
-                    <>
-                      <span className={`${styles.summaryChip} ${styles.summaryRead}`}>
-                        <Codicon name="eye" style={{ fontSize: 11 }} />
-                        {rules.filter((r) => r.domain === "workspace" && r.access === "read").length} read
-                      </span>
-                      <span className={`${styles.summaryChip} ${styles.summaryWrite}`}>
-                        <Codicon name="edit" style={{ fontSize: 11 }} />
-                        {rules.filter((r) => r.domain === "workspace" && r.access === "write").length} read + write
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className={`${styles.summaryChip} ${styles.summaryAllow}`}>
-                        <Codicon name="pass-filled" style={{ fontSize: 11 }} />
-                        {actionBreakdown.allow} allow
-                      </span>
-                      <span className={`${styles.summaryChip} ${styles.summaryAsk}`}>
-                        <Codicon name="question" style={{ fontSize: 11 }} />
-                        {actionBreakdown.ask} ask
-                      </span>
-                      <span className={`${styles.summaryChip} ${styles.summaryDeny}`}>
-                        <Codicon name="circle-slash" style={{ fontSize: 11 }} />
-                        {actionBreakdown.deny} deny
-                      </span>
-                    </>
-                  )}
-                </div>
+                <Codicon
+                  name={activeDomainMeta.icon}
+                  style={{ fontSize: 16, color: "var(--foreground-bright)", flexShrink: 0 }}
+                />
+                <h1 className={styles.domainTitle}>{activeDomainMeta.label}</h1>
               </div>
 
-              {/* Filter + add */}
               <div className={styles.contentHeader}>
                 <div className={styles.searchBox}>
                   <Codicon name="search" style={{ color: "var(--muted)", fontSize: 14 }} />
@@ -497,14 +656,13 @@ export default function ApprovalsProposalAPage() {
                   )}
                 </div>
                 <div className={styles.headerActions}>
-                  <button className={styles.actionBtn} title={activeDomainMeta.patternHint}>
+                  <button className={styles.actionBtn}>
                     <Codicon name="add" style={{ fontSize: 14 }} />
                     <span>Add Rule</span>
                   </button>
                 </div>
               </div>
 
-              {/* Rule list */}
               <div className={styles.listArea}>
                 {visibleRules.length === 0 ? (
                   <div className={styles.emptyState}>
@@ -517,34 +675,22 @@ export default function ApprovalsProposalAPage() {
                     </span>
                   </div>
                 ) : (
-                  <>
-                    {workspaceRules.length > 0 && (
-                      <>
-                        <ScopeGroup label="Workspace" count={workspaceRules.length} />
-                        {renderRules(workspaceRules)}
-                      </>
-                    )}
-                    {userRules.length > 0 && (
-                      <>
-                        <ScopeGroup label="User" count={userRules.length} />
-                        {renderRules(userRules)}
-                      </>
-                    )}
-                  </>
+                  groupedRules.map(({ source, rules: items }) =>
+                    items.length > 0 ? (
+                      <div key={source}>
+                        <SourceGroup source={source} count={items.length} />
+                        {renderRules(items)}
+                      </div>
+                    ) : null
+                  )
                 )}
               </div>
 
               <div className={styles.footer}>
                 <span className={styles.footerText}>
-                  {activeDomain === "workspace" ? (
-                    <>
-                      Paths grant access outside the open workspace. <code>read</code> permits inspection only; <code>read + write</code> allows edits.
-                    </>
-                  ) : (
-                    <>
-                      Rules evaluate top-down. <code>deny</code> always blocks, <code>ask</code> always prompts, <code>allow</code> auto-approves.
-                    </>
-                  )}
+                  <span className={styles.footerDescription}>{activeDomainMeta.description}</span>{" "}
+                  Higher-priority sources override lower:{" "}
+                  <code>managed</code> beats <code>workspace</code> beats <code>user</code>.
                 </span>
                 <a className={styles.footerLink} href="#">
                   Learn more
