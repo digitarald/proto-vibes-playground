@@ -277,20 +277,11 @@
   color: var(--foreground);
 }
 
-.sourceDesc {
-  font-size: 0.75rem;
-  color: var(--muted);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .sourceCount {
   font-size: 0.6875rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+  margin-left: auto;
 }
 
 /* All section headers share the same muted treatment — priority is conveyed by

@@ -83,7 +83,7 @@ const PERMISSION_DOMAINS: {
     label: "Files",
     icon: "file",
     settingKey: "chat.tools.files.rules",
-    description: "Per-rule access to files in the workspace. None blocks the agent, Read allows inspection, Edit allows changes.",
+    description: "Per-rule access to files in the workspace. None hides the file from the agent entirely, Read allows inspection, Edit allows changes.",
   },
   {
     id: "fetch",
@@ -478,7 +478,6 @@ function SourceGroup({ source, count }: { source: RuleSource; count: number }) {
     <div className={`${styles.sourceHeader} ${styles[`sourceHeader_${source}`]}`}>
       <Codicon name={meta.icon} style={{ fontSize: 12 }} />
       <span className={styles.sourceLabel}>{meta.label}</span>
-      <span className={styles.sourceDesc}>{meta.description}</span>
       <span className={styles.sourceCount}>{count}</span>
     </div>
   );
@@ -700,9 +699,7 @@ export default function ApprovalsMergedFilesPage() {
 
               <div className={styles.footer}>
                 <span className={styles.footerText}>
-                  <span className={styles.footerDescription}>{activeDomainMeta.description}</span>{" "}
-                  Higher-priority sources override lower:{" "}
-                  <code>managed</code> beats <code>workspace</code> beats <code>user</code>.
+                  <span className={styles.footerDescription}>{activeDomainMeta.description}</span>
                 </span>
                 <a className={styles.footerLink} href="#">
                   Learn more
