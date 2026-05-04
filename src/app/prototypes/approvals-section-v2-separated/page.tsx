@@ -414,9 +414,9 @@ export default function ApprovalsSectionSeparatedPage() {
 
   /* Filter sources by active approval section's kinds */
   const activeApproval = APPROVAL_ITEMS.find((a) => a.id === activeSection);
-  const kindFilter = activeApproval?.kinds ?? [];
 
   const visibleSources = useMemo(() => {
+    const kindFilter = activeApproval?.kinds ?? [];
     let result = sources.filter((s) => kindFilter.includes(s.kind));
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -428,7 +428,7 @@ export default function ApprovalsSectionSeparatedPage() {
         .filter((s) => s.label.toLowerCase().includes(q) || s.approvals.length > 0);
     }
     return result;
-  }, [sources, kindFilter, searchQuery]);
+  }, [sources, activeApproval?.kinds, searchQuery]);
 
   const workspaceSources = visibleSources.filter((s) => s.scope === "workspace");
   const userSources = visibleSources.filter((s) => s.scope === "user");

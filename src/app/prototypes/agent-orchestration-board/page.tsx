@@ -170,7 +170,6 @@ export default function AgentOrchestrationBoardPage() {
   useEffect(() => {
     if (!isRunning || allCompleted) {
       if (tickRef.current) clearInterval(tickRef.current);
-      if (allCompleted) setIsRunning(false);
       return;
     }
 
@@ -180,6 +179,7 @@ export default function AgentOrchestrationBoardPage() {
 
       setAgents((prev) => {
         const next = prev.map((a) => ({ ...a }));
+        let hasIncomplete = false;
 
         for (const agent of next) {
           if (agent.status === "queued" && depsReady(agent, next)) {
@@ -208,6 +208,14 @@ export default function AgentOrchestrationBoardPage() {
               agent.completedAt = now;
             }
           }
+
+          if (agent.status !== "completed") {
+            hasIncomplete = true;
+          }
+        }
+
+        if (!hasIncomplete) {
+          setIsRunning(false);
         }
 
         return next;
