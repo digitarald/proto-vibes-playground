@@ -1,0 +1,7 @@
+{
+  "title": "Plugin Metadata Variations",
+  "description": "Three treatments of the Agent Customizations Plugins surface enriched with richer presentation metadata — displayName, icon, category, capabilities, and starter prompts.",
+  "author": "Team",
+  "tags": ["plugins", "customizations", "metadata", "catalog"],
+  "createdAt": "2026-06-11"
+}

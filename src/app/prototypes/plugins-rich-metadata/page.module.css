@@ -1,0 +1,867 @@
+/* ─── Dialog shell ─── */
+.backdrop {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, color-mix(in srgb, var(--accent) 7%, transparent), transparent),
+    var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem 6rem;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 1080px;
+  height: min(840px, calc(100vh - 6rem));
+  display: flex;
+  flex-direction: column;
+  background: var(--chrome);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem 0.6rem 1.1rem;
+  flex-shrink: 0;
+}
+.titleText {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+.titleActions {
+  display: flex;
+  gap: 0.9rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.titleActions :global(.codicon) {
+  cursor: pointer;
+}
+.titleActions :global(.codicon):hover {
+  color: var(--foreground-bright);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Nav rail ─── */
+.nav {
+  width: 196px;
+  flex-shrink: 0;
+  padding: 0.4rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.42rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-align: left;
+}
+.navItem:hover {
+  background: var(--hover);
+}
+.navActive {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--foreground-bright);
+}
+.navIcon {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.navActive .navIcon {
+  color: var(--accent);
+}
+.navLabel {
+  flex: 1;
+}
+.navCount {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Content area ─── */
+.content {
+  flex: 1;
+  min-width: 0;
+  background: var(--background);
+  border-radius: var(--radius-lg) 0 0 0;
+  margin: 0.25rem 0.25rem 0.25rem 0;
+  padding: 2rem 2.25rem;
+  overflow-y: auto;
+}
+
+.contentHead {
+  margin-bottom: 1.5rem;
+}
+.h1 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--foreground-bright);
+  margin: 0 0 0.5rem;
+}
+.lede {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 60ch;
+  margin: 0;
+}
+.link {
+  color: var(--link);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ─── Toolbar ─── */
+.toolbar {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+.searchWrap {
+  position: relative;
+  flex: 1;
+}
+.searchIcon {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+.search {
+  width: 100%;
+  padding: 0.5rem 0.7rem 0.5rem 2rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  outline: none;
+}
+.search:focus {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.secondaryBtn,
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.8rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.iconBtn {
+  padding: 0.5rem 0.6rem;
+}
+.secondaryBtn:hover,
+.iconBtn:hover {
+  background: var(--hover);
+}
+
+/* ─── Filter chips (grid) ─── */
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+}
+.filterChip {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.filterChip:hover {
+  color: var(--foreground);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.filterChipActive {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--foreground-bright);
+}
+
+/* ─── Shared bits ─── */
+.iconTile {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22%;
+  background: #fbfbfd;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.25);
+  color: #4a4a52;
+  font-weight: 600;
+  overflow: hidden;
+}
+.iconTile img {
+  object-fit: contain;
+  display: block;
+}
+
+/* Verified publisher (VS Code style) */
+.publisher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.verified {
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+
+.byline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.byline :global(.codicon) {
+  font-size: 0.8rem;
+}
+.dot {
+  color: var(--border);
+}
+
+/* Capability chips */
+.capRow {
+  display: inline-flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* Install / Add buttons */
+.installBtn,
+.installBtnLg,
+.installedBtn {
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+}
+.installBtn {
+  background: var(--card);
+  color: var(--foreground-bright);
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.9rem;
+}
+.installBtn:hover {
+  background: var(--hover);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.installBtnLg {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.55rem 1.4rem;
+}
+.installBtnLg:hover {
+  background: var(--accent-hover);
+}
+.installedBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: transparent;
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+  padding: 0.4rem 0.85rem;
+}
+/* Round add button (grid card) */
+.addBtn,
+.addBtnDone {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.addBtn {
+  background: var(--hover);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+.addBtn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.addBtnDone {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+  color: var(--success);
+}
+
+/* ─── Section titles ─── */
+.sectionTitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+
+/* ─── Configured rows (GitHub Copilot MCP style) ─── */
+.configured {
+  margin-bottom: 1.75rem;
+}
+.configRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.configRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.configRow:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.configRowOff {
+  opacity: 0.6;
+}
+.configMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.configName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+.configActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.rowAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.configRow:hover .rowAction {
+  opacity: 1;
+}
+.rowAction:hover {
+  background: var(--hover);
+  color: var(--foreground-bright);
+}
+
+/* ─── Toggle switch ─── */
+.toggle {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  border: none;
+  background: var(--border);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+}
+.toggleOn {
+  background: var(--accent);
+}
+.toggleKnob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.toggleOn .toggleKnob {
+  transform: translateX(14px);
+}
+
+/* Detail enable toggle */
+.detailToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.enabledLabel {
+  font-size: 0.8125rem;
+  color: var(--success);
+}
+.disabledLabel {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+/* ─── Variation A: List ─── */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.listRow {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 0.75rem;
+  border-radius: var(--radius-md);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.listRow:last-child {
+  border-bottom: none;
+}
+.listRow:hover {
+  background: var(--hover);
+}
+.listMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.listTitleLine {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.listTitleLine .publisher {
+  margin-left: 0.1rem;
+}
+.listTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+.listDesc {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 72ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Variation B: Grid ─── */
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+.groupCount {
+  color: var(--muted);
+  background: var(--card);
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.85rem;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s;
+}
+.card:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.cardTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+.cardDesc {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--muted);
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cardFoot {
+  margin-top: 0.1rem;
+  min-height: 1.2rem;
+}
+.empty {
+  color: var(--muted);
+  font-size: 0.875rem;
+  padding: 2rem 0;
+}
+
+/* ─── Variation C: Detail ─── */
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 0;
+}
+.backBtn:hover {
+  color: var(--foreground-bright);
+}
+.detailHero {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+}
+.detailHeroMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.detailTitle {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--foreground-bright);
+}
+.detailByline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.detailTagline {
+  margin: 0.2rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--foreground);
+  max-width: 64ch;
+}
+.detailAction {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+.uninstallBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.uninstallBtn:hover {
+  background: color-mix(in srgb, var(--error, #f14c4c) 14%, transparent);
+  border-color: color-mix(in srgb, var(--error, #f14c4c) 40%, transparent);
+  color: var(--foreground-bright);
+}
+.uninstallBtn :global(.codicon) {
+  font-size: 0.85rem;
+}
+.factRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem;
+  padding: 0.85rem 1.1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.factLabel {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.factValue {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground-bright);
+}
+.factLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--link);
+  text-decoration: none;
+}
+.factLink:hover {
+  text-decoration: underline;
+}
+.factLink :global(.codicon) {
+  font-size: 0.75rem;
+}
+.detailDesc {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--foreground);
+  max-width: 70ch;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.panelTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+.panelTitle :global(.codicon) {
+  color: var(--accent);
+}
+.contentSection {
+  display: flex;
+  flex-direction: column;
+}
+.contentSecHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.contentSecHead :global(.codicon) {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.contentTitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+.countBadge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.02rem 0.45rem;
+  min-width: 1.1rem;
+  text-align: center;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.chip {
+  font-size: 0.75rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.18rem 0.55rem;
+}
+.chipMono {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.7188rem;
+  color: var(--foreground-bright);
+}
+.chipMore {
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 0.18rem 0.45rem;
+  align-self: center;
+}
+
+.prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.promptChip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.promptChip :global(.codicon) {
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+.promptChip:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  background: var(--hover);
+}
+
+/* ─── Floating variation switcher ─── */
+.switcher {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.3rem;
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+  z-index: 20;
+}
+.switchBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.switchBtn:hover {
+  color: var(--foreground-bright);
+}
+.switchActive {
+  background: var(--accent);
+  color: #fff;
+}
+.switchActive:hover {
+  color: #fff;
+}
