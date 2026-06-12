@@ -79,6 +79,18 @@
 .navItem:hover {
   background: var(--hover);
 }
+.navItemMuted .navLabel,
+.navItemMuted .navCount {
+  color: var(--muted);
+}
+.navItemMuted:hover .navLabel {
+  color: var(--foreground);
+}
+.navDivider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.4rem 0.6rem;
+}
 .navActive {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
   color: var(--foreground-bright);

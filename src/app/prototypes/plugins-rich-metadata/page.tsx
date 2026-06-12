@@ -361,15 +361,18 @@ const CONTENT_META: Record<
 
 type Variation = "list" | "grid" | "detail";
 
-const NAV_ITEMS = [
+const NAV_PRIMARY = [
+  { icon: "plug", label: "Plugins", count: 13 },
+  { icon: "lightbulb", label: "Skills", count: 61 },
+  { icon: "server", label: "MCP Servers", count: 7 },
+];
+
+const NAV_SECONDARY = [
   { icon: "home", label: "Overview", count: null },
   { icon: "compass", label: "Agents", count: 7 },
-  { icon: "lightbulb", label: "Skills", count: 61 },
   { icon: "book", label: "Instructions", count: 3 },
   { icon: "bookmark", label: "Prompts", count: 40 },
   { icon: "zap", label: "Hooks", count: 3 },
-  { icon: "server", label: "MCP Servers", count: 7 },
-  { icon: "plug", label: "Plugins", count: 13 },
 ];
 
 function titleOf(p: Plugin) {
@@ -521,11 +524,19 @@ export default function PluginsRichMetadataPage() {
         <div className={styles.body}>
           {/* Nav rail */}
           <nav className={styles.nav}>
-            {NAV_ITEMS.map((item) => (
+            {NAV_PRIMARY.map((item) => (
               <button
                 key={item.label}
                 className={`${styles.navItem} ${item.label === "Plugins" ? styles.navActive : ""}`}
               >
+                <Codicon name={item.icon} className={styles.navIcon} />
+                <span className={styles.navLabel}>{item.label}</span>
+                {item.count != null && <span className={styles.navCount}>{item.count}</span>}
+              </button>
+            ))}
+            <div className={styles.navDivider} />
+            {NAV_SECONDARY.map((item) => (
+              <button key={item.label} className={`${styles.navItem} ${styles.navItemMuted}`}>
                 <Codicon name={item.icon} className={styles.navIcon} />
                 <span className={styles.navLabel}>{item.label}</span>
                 {item.count != null && <span className={styles.navCount}>{item.count}</span>}
