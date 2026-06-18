@@ -2,9 +2,17 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Install dependencies",
+      "type": "shell",
+      "command": "npm install",
+      "inAgents": true,
+      "runOptions": { "runOn": "worktreeCreated" }
+    },
+    {
       "label": "dev",
       "type": "shell",
       "command": "npm run dev",
+      "inAgents": true,
       "group": {
         "kind": "build",
         "isDefault": true
