@@ -1,0 +1,372 @@
+/* ── Editor chrome wrapper ── */
+.editor {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--background);
+  overflow: hidden;
+}
+
+/* ── Tab bar ── */
+.tabBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px 0 0;
+  flex-shrink: 0;
+}
+
+.tabGroup {
+  display: flex;
+  height: 100%;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 100%;
+  font-size: 0.6875rem;
+  color: var(--muted);
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--foreground);
+}
+
+.tabActive {
+  color: var(--foreground-bright);
+  background: var(--background);
+  border-bottom: 1px solid var(--background);
+  margin-bottom: -1px;
+}
+
+.tabLabel {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabClose {
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.1s;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 3px;
+}
+
+.tab:hover .tabClose {
+  opacity: 0.6;
+}
+
+.tabClose:hover {
+  opacity: 1;
+  background: var(--hover);
+}
+
+.tabActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ── Editor content area ── */
+.editorContent {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ── Page layout ── */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+}
+
+.headerTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+
+.subtitle {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── Sections ── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.question {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground-bright);
+  line-height: 1.4;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* ── Likert row — connected segmented control ── */
+.likertRow {
+  display: flex;
+}
+
+.likertItem {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 2px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-right-width: 0;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  color: var(--foreground);
+}
+
+.likertItem:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.likertItem:last-child {
+  border-right-width: 1px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.likertItem:hover {
+  background: var(--hover);
+}
+
+.likertItem.likertSelected {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: var(--accent);
+  z-index: 1;
+  position: relative;
+  border-right-width: 1px;
+}
+
+/* Collapse double border next to selected */
+.likertItem.likertSelected + .likertItem {
+  border-left-width: 0;
+}
+
+.likertLabel {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1;
+  user-select: none;
+}
+
+.likertSelected .likertLabel {
+  color: var(--foreground-bright);
+  font-weight: 500;
+}
+
+/* ── Option list (long-text single/multi select) ── */
+.optionList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+}
+
+@media (min-width: 520px) {
+  .optionList {
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 12px;
+  }
+}
+
+.optionRow {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 5px 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  color: var(--foreground);
+  font-size: 0.75rem;
+  text-align: left;
+  line-height: 1.45;
+}
+
+.optionRow:hover {
+  background: var(--hover);
+}
+
+.optionSelected {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.optionLabel {
+  flex: 1;
+}
+
+.optionSelected .optionLabel {
+  color: var(--foreground-bright);
+}
+
+/* Radio indicator (single select) */
+.radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid var(--muted);
+  flex-shrink: 0;
+  position: relative;
+  top: 1px;
+  transition: all 0.1s ease;
+}
+
+.optionSelected .radio {
+  border-color: var(--accent);
+}
+
+.radioDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: dotIn 0.12s ease;
+}
+
+@keyframes dotIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+/* Checkbox indicator (multi select) */
+.checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1.5px solid var(--muted);
+  flex-shrink: 0;
+  position: relative;
+  top: 1px;
+  font-size: 9px;
+  transition: all 0.1s ease;
+}
+
+.optionSelected .checkbox {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── Submit button ── */
+.submitBtn {
+  padding: 7px 20px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.12s;
+  align-self: flex-start;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.submitBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Done state ── */
+.doneState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 8px;
+  text-align: center;
+}
+
+.doneIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.doneTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground-bright);
+}
+
+.doneSubtitle {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
