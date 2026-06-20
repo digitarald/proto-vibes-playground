@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { Codicon } from "../../components/codicon";
 import styles from "./page.module.css";
 
@@ -15,42 +15,44 @@ const PMF_OPTIONS = [
 ] as const;
 
 const HELPED_OPTIONS = [
-  { value: "code-faster", label: "Writing code faster" },
-  { value: "unstuck", label: "Getting unstuck" },
-  { value: "multi-file", label: "Multi-file changes" },
-  { value: "automate", label: "Automating tasks" },
-  { value: "navigate", label: "Navigating code" },
-  { value: "review", label: "Reviewing code" },
-  { value: "no-value", label: "No clear value" },
+  { value: "shipping", label: "Shipping changes faster" },
+  { value: "unstuck", label: "Getting unstuck on bugs" },
+  { value: "multi-file", label: "Making multi-file changes" },
+  { value: "automate", label: "Automating repetitive work" },
+  { value: "navigate", label: "Understanding the codebase" },
+  { value: "planning", label: "Planning an approach" },
+  { value: "review", label: "Improving or reviewing code" },
+  { value: "no-value", label: "I haven\u2019t gotten clear value yet" },
 ] as const;
 
 const BLOCKER_OPTIONS = [
-  { value: "trust", label: "Hard to trust" },
-  { value: "context", label: "Lacks context" },
-  { value: "multi-step", label: "Fails multi-step tasks" },
-  { value: "overhead", label: "Too much steering" },
-  { value: "slow", label: "Too slow" },
-  { value: "setup", label: "Setup is hard" },
-  { value: "security", label: "Security friction" },
-  { value: "nothing", label: "Nothing major" },
+  { value: "trust", label: "Output is hard to trust" },
+  { value: "context", label: "Missing repo or project context" },
+  { value: "multi-step", label: "Struggles with bigger tasks" },
+  { value: "review-overhead", label: "Too much time reviewing" },
+  { value: "steering", label: "Too much steering needed" },
+  { value: "slow", label: "Too slow / breaks flow" },
+  { value: "setup", label: "Setup or integrations are hard" },
+  { value: "security", label: "Security or permissions friction" },
+  { value: "pricing", label: "Limits, cost, or billing" },
 ] as const;
 
 function EditorTabBar() {
   return (
-    <div className={styles.tabBar}>
+    <div className={styles.tabBar} role="tablist" aria-label="Editor tabs">
       <div className={styles.tabGroup}>
-        <div className={styles.tab}>
+        <div className={styles.tab} role="tab" aria-selected="false">
           <Codicon name="file" />
           <span className={styles.tabLabel}>index.ts</span>
-          <span className={styles.tabClose}><Codicon name="close" /></span>
+          <span className={styles.tabClose} aria-hidden="true"><Codicon name="close" /></span>
         </div>
-        <div className={`${styles.tab} ${styles.tabActive}`}>
+        <div className={`${styles.tab} ${styles.tabActive}`} role="tab" aria-selected="true">
           <Codicon name="sparkle" />
           <span className={styles.tabLabel}>Help Improve Copilot</span>
-          <span className={styles.tabClose}><Codicon name="close" /></span>
+          <span className={styles.tabClose} aria-hidden="true"><Codicon name="close" /></span>
         </div>
       </div>
-      <div className={styles.tabActions}>
+      <div className={styles.tabActions} aria-hidden="true">
         <Codicon name="split-horizontal" />
         <Codicon name="ellipsis" />
       </div>
@@ -61,17 +63,10 @@ function EditorTabBar() {
 export default function CopilotPmfSurveyCompactPage() {
   const [pmf, setPmf] = useState<string | null>(null);
   const [helped, setHelped] = useState<string | null>(null);
-  const [blockers, setBlockers] = useState<Set<string>>(new Set());
+  const [blocker, setBlocker] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const toggleSet = useCallback((set: Set<string>, setter: (s: Set<string>) => void, value: string) => {
-    const next = new Set(set);
-    if (next.has(value)) next.delete(value);
-    else next.add(value);
-    setter(next);
-  }, []);
-
-  const canSubmit = pmf !== null && helped !== null && blockers.size > 0;
+  const canSubmit = pmf !== null && helped !== null && blocker !== null;
 
   if (submitted) {
     return (
@@ -79,8 +74,8 @@ export default function CopilotPmfSurveyCompactPage() {
         <EditorTabBar />
         <div className={styles.editorContent}>
           <div className={styles.page}>
-            <div className={styles.doneState}>
-              <div className={styles.doneIcon}><Codicon name="check" /></div>
+            <div className={styles.doneState} role="status" aria-live="polite">
+              <div className={styles.doneIcon} aria-hidden="true"><Codicon name="check" /></div>
               <p className={styles.doneTitle}>Thanks for your feedback!</p>
               <p className={styles.doneSubtitle}>Your input helps shape GitHub Copilot.</p>
             </div>
@@ -94,7 +89,7 @@ export default function CopilotPmfSurveyCompactPage() {
     <div className={styles.editor}>
       <EditorTabBar />
       <div className={styles.editorContent}>
-        <div className={styles.page}>
+        <div className={styles.page} role="form" aria-label="Copilot feedback survey">
           {/* Header */}
           <header className={styles.header}>
             <div className={styles.headerRow}>
@@ -105,12 +100,15 @@ export default function CopilotPmfSurveyCompactPage() {
           </header>
 
           {/* Q1: PMF — 5-point Likert */}
-          <section className={styles.section}>
-            <p className={styles.question}>How disappointed would you be if you could no longer use Copilot?</p>
-            <div className={styles.likertRow}>
+          <fieldset className={styles.section}>
+            <legend className={styles.question}>How disappointed would you be if you could no longer use Copilot?</legend>
+            <div className={styles.likertRow} role="radiogroup" aria-label="Disappointment level">
               {PMF_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={pmf === opt.value}
                   className={`${styles.likertItem} ${pmf === opt.value ? styles.likertSelected : ""}`}
                   onClick={() => setPmf(opt.value)}
                 >
@@ -118,54 +116,59 @@ export default function CopilotPmfSurveyCompactPage() {
                 </button>
               ))}
             </div>
-          </section>
+          </fieldset>
 
           {/* Q2: Helped with */}
-          <section className={styles.section}>
-            <p className={styles.question}>What has Copilot helped you with most recently?</p>
-            <div className={styles.optionList}>
+          <fieldset className={styles.section}>
+            <legend className={styles.question}>What has Copilot helped you with most recently?</legend>
+            <div className={styles.optionList} role="radiogroup" aria-label="Main benefit">
               {HELPED_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={helped === opt.value}
                   className={`${styles.optionRow} ${helped === opt.value ? styles.optionSelected : ""}`}
                   onClick={() => setHelped(opt.value)}
                 >
-                  <span className={styles.radio}>
+                  <span className={styles.radio} aria-hidden="true">
                     {helped === opt.value && <span className={styles.radioDot} />}
                   </span>
                   <span className={styles.optionLabel}>{opt.label}</span>
                 </button>
               ))}
             </div>
-          </section>
+          </fieldset>
 
-          {/* Q3: Blockers */}
-          <section className={styles.section}>
-            <p className={styles.question}>
-              What most gets in your way?
-              <span className={styles.hint}> · Select all that apply</span>
-            </p>
-            <div className={styles.optionList}>
+          {/* Q3: Blockers — single select */}
+          <fieldset className={styles.section}>
+            <legend className={styles.question}>What most gets in your way?</legend>
+            <div className={styles.optionList} role="radiogroup" aria-label="Main blocker">
               {BLOCKER_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
-                  className={`${styles.optionRow} ${blockers.has(opt.value) ? styles.optionSelected : ""}`}
-                  onClick={() => toggleSet(blockers, setBlockers, opt.value)}
+                  type="button"
+                  role="radio"
+                  aria-checked={blocker === opt.value}
+                  className={`${styles.optionRow} ${blocker === opt.value ? styles.optionSelected : ""}`}
+                  onClick={() => setBlocker(opt.value)}
                 >
-                  <span className={styles.checkbox}>
-                    {blockers.has(opt.value) && <Codicon name="check" />}
+                  <span className={styles.radio} aria-hidden="true">
+                    {blocker === opt.value && <span className={styles.radioDot} />}
                   </span>
                   <span className={styles.optionLabel}>{opt.label}</span>
                 </button>
               ))}
             </div>
-          </section>
+          </fieldset>
 
           {/* Submit */}
           <button
+            type="submit"
             className={styles.submitBtn}
             disabled={!canSubmit}
             onClick={() => setSubmitted(true)}
+            aria-disabled={!canSubmit}
           >
             Submit feedback
           </button>
