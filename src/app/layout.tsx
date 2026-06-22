@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,13 +15,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link
-          rel="icon"
-          href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>"
-        />
-      </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Script id="figma-capture-loader" strategy="afterInteractive">
+          {`
+            if (window.location.hash.includes('figmacapture=')) {
+              const script = document.createElement('script');
+              script.src = 'https://mcp.figma.com/mcp/html-to-design/capture.js';
+              script.async = true;
+              document.head.appendChild(script);
+            }
+          `}
+        </Script>
+      </body>
     </html>
   );
 }
