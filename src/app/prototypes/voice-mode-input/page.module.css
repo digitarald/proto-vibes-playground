@@ -1,0 +1,309 @@
+/* ── Voice Mode Input ── */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Chat area (scrollable messages) ── */
+.chatArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.message {
+  max-width: 600px;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  line-height: 1.625;
+  animation: messageIn 0.3s ease;
+}
+
+.messageUser {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--accent) 15%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  color: var(--foreground-bright);
+}
+
+.messageAgent {
+  align-self: flex-start;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.messageAgent code {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: var(--hover);
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Live transcript bubble while speaking */
+.liveTranscript {
+  align-self: flex-end;
+  max-width: 600px;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  line-height: 1.625;
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+  border: 1px dashed color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--foreground);
+  animation: messageIn 0.2s ease;
+}
+
+.interimText {
+  color: var(--muted);
+}
+
+.transcriptCursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--accent);
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ── Control bar (bottom) ── */
+.controlBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--chrome);
+  border-top: 1px solid var(--border);
+  z-index: 10;
+}
+
+/* Glow line on top of bar when listening */
+.controlBar::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(57, 148, 188, var(--glow-intensity, 0)),
+    rgba(72, 201, 196, var(--glow-intensity, 0)),
+    rgba(193, 132, 198, var(--glow-intensity, 0)),
+    rgba(79, 143, 221, var(--glow-intensity, 0))
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.controlBar.active::before {
+  opacity: 1;
+}
+
+/* Ambient glow beneath the border */
+.controlBar::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: linear-gradient(
+    90deg,
+    rgba(57, 148, 188, calc(var(--glow-intensity, 0) * 0.3)),
+    rgba(72, 201, 196, calc(var(--glow-intensity, 0) * 0.25)),
+    rgba(193, 132, 198, calc(var(--glow-intensity, 0) * 0.2)),
+    rgba(79, 143, 221, calc(var(--glow-intensity, 0) * 0.25))
+  );
+  filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.controlBar.active::after {
+  opacity: 1;
+}
+
+/* Mic button */
+.micButton {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.micButton:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  background: var(--hover);
+}
+
+.micButton.listening {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 25%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+}
+
+.micIcon {
+  font-size: 1.125rem;
+  color: var(--muted);
+  transition: color 0.2s ease;
+}
+
+.micButton.listening .micIcon {
+  color: var(--accent);
+}
+
+/* Pulse ring around mic when active */
+.micPulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  animation: micPulseAnim 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes micPulseAnim {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+/* ── Frequency Visualizer (inline in bar) ── */
+.visualizer {
+  display: flex;
+  align-items: center;
+  gap: 1.5px;
+  height: 32px;
+  flex: 1;
+  z-index: 2;
+}
+
+.bar {
+  width: 2px;
+  border-radius: 1px;
+  transition: height 0.05s ease;
+  min-height: 3px;
+}
+
+/* ── Status text ── */
+.status {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.status.active {
+  color: var(--foreground);
+}
+
+/* ── Stop button ── */
+.stopButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--error);
+  background: var(--card);
+  color: var(--error);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.stopButton:hover {
+  background: color-mix(in srgb, var(--error) 12%, var(--card));
+}
+
+/* ── Hint ── */
+.hint {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  z-index: 2;
+}
+
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  padding: 0.0625rem 0.25rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--foreground);
+}
+
+/* ── Empty state ── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+  opacity: 0.4;
+}
+
+.emptyText {
+  font-size: 0.875rem;
+}
+
+.emptyHint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  opacity: 0.7;
+}

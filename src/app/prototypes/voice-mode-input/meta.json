@@ -1,0 +1,7 @@
+{
+  "title": "Voice Mode Input",
+  "description": "Siri-like voice mode for chat input with frequency-based gradient animation driven by mic input, designed for developer workflows.",
+  "author": "Team",
+  "tags": ["voice", "input", "audio", "animation"],
+  "createdAt": "2026-06-17"
+}
