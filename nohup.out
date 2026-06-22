@@ -1,0 +1,49 @@
+
+> proto-vibes-playground@0.1.0 dev
+> next dev
+
+⚠ Port 3000 is in use by process 18621, using available port 3001 instead.
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.102.168:3001
+✓ Ready in 302ms
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          18621
+- Dir:          /Users/digitarald/Developer/proto-vibes-playground
+- Log:          .next/dev/logs/next-development.log
+
+Run kill 18621 to stop it.
+[?25h
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.20.14.64:3000
+✓ Ready in 291ms
+
+ GET /prototypes/agent-orchestration-board-v2-usertesting/ 200 in 683ms (next.js: 583ms, application-code: 100ms)
+✓ Compiled in 39ms
+✓ Compiled in 13ms
+✓ Compiled in 17ms
+✓ Compiled in 13ms
+✓ Compiled in 17ms
+ GET /prototypes/agent-orchestration-board-v2-usertesting/ 200 in 41ms (next.js: 6ms, application-code: 35ms)
+ GET / 200 in 70ms (next.js: 26ms, application-code: 44ms)
+ GET /prototypes/agent-orchestration-board/ 200 in 193ms (next.js: 183ms, application-code: 9ms)
+ GET / 200 in 28ms (next.js: 9ms, application-code: 20ms)
+ GET /prototypes/agent-orchestration-board-v2-usertesting/ 200 in 18ms (next.js: 5ms, application-code: 13ms)
+ GET /prototypes/agent-orchestration-board-v2-usertesting/ 200 in 534ms (next.js: 167ms, application-code: 367ms)
+✓ Compiled in 192ms
+ GET /prototypes/agent-orchestration-board-v2-usertesting/ 200 in 92ms (next.js: 18ms, application-code: 74ms)
+ GET / 200 in 81ms (next.js: 28ms, application-code: 52ms)
+⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::3000
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+    at new Promise (<anonymous>) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+[?25h

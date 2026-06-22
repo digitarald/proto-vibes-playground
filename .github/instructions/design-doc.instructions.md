@@ -1,6 +1,6 @@
 ---
-name: design-doc
 description: "Create or update a prototype's DESIGN.md. Use when the user wants to capture learnings, document UX patterns, or write up design rationale for a prototype."
+applyTo: "**/DESIGN.md"
 ---
 
 # DESIGN.md — Prototype Design Document
