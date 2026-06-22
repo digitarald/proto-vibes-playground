@@ -1,5 +1,35 @@
 [
   {
+    "slug": "voice-mode-input",
+    "title": "Voice Mode Input",
+    "description": "Siri-like voice mode for chat input with frequency-based gradient animation driven by mic input, designed for developer workflows.",
+    "author": "Team",
+    "tags": [
+      "voice",
+      "input",
+      "audio",
+      "animation"
+    ],
+    "createdAt": "2026-06-17",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
+    "slug": "plugins-rich-metadata",
+    "title": "Plugin Metadata Variations",
+    "description": "Three treatments of the Agent Customizations Plugins surface enriched with richer presentation metadata — displayName, icon, category, capabilities, and starter prompts.",
+    "author": "Team",
+    "tags": [
+      "plugins",
+      "customizations",
+      "metadata",
+      "catalog"
+    ],
+    "createdAt": "2026-06-11",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
     "slug": "approvals-section-v4-merged-files",
     "title": "Approvals Section (Merged Files + Hierarchy)",
     "description": "Merges File Reads + File Edits into one Files panel with per-rule access (none/read/edit). Adds User → Workspace → Managed source hierarchy with override visualization, locked managed rules, and Network post-approval review.",
