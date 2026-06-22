@@ -42,3 +42,4 @@ yarn-error.log*
 # generated build artifacts
 /src/generated/
 next-env.d.ts
+nohup.out
