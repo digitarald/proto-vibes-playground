@@ -21,6 +21,7 @@ interface FileChange {
 interface InputPrompt {
   prompt: string;
   context: string;
+  severity?: "warning" | "critical";
   options: { label: string; description: string; recommended?: boolean }[];
 }
 
@@ -69,11 +70,11 @@ const INITIAL_AGENTS: Agent[] = [
     inputPrompts: [
       {
         prompt: "Which payment providers should we evaluate alongside Stripe?",
-        context: "Currently using PayPal Legacy SDK (v2.1). The team has expressed interest in evaluating alternatives before committing.",
+        context: "Currently using PayPal Legacy SDK (v2.1). CTO mentioned Adyen in last week's meeting. VP of Sales wants Square for small merchants. No formal decision yet.",
         options: [
-          { label: "Stripe only", description: "Focus research on Stripe — team already aligned", recommended: true },
-          { label: "Stripe + Adyen", description: "Evaluate Adyen as backup for enterprise clients" },
-          { label: "Full comparison", description: "Stripe vs Adyen vs Square — comprehensive but slower" },
+          { label: "Stripe only", description: "Focus research on Stripe — saves time but skips due diligence" },
+          { label: "Stripe + Adyen", description: "Evaluate Adyen as backup — adds 2-3 days but covers enterprise" },
+          { label: "Full comparison", description: "Stripe vs Adyen vs Square — comprehensive, adds a week" },
         ],
       },
     ],
@@ -94,20 +95,20 @@ const INITIAL_AGENTS: Agent[] = [
     inputPrompts: [
       {
         prompt: "Choose migration strategy for existing subscriptions",
-        context: "Found 2,847 active subscriptions on the legacy system. Migration approach affects billing continuity and customer experience.",
+        context: "Found 2,847 active subscriptions. 34 enterprise accounts (>$10k/mo) have custom billing logic. Last migration attempt (2024) caused 6 hours of billing outage.",
         options: [
-          { label: "Bulk migrate", description: "Move all in one batch during maintenance window (faster, higher risk)" },
-          { label: "Rolling migration", description: "Migrate at renewal time over 30 days (slower, zero disruption)", recommended: true },
-          { label: "Shadow + cutover", description: "Run both in parallel for 7 days, then cut over (safest, most expensive)" },
+          { label: "Bulk migrate", description: "Move all at once during maintenance window. Fast but last time this caused a 6-hour outage." },
+          { label: "Rolling migration", description: "Migrate at renewal over 30 days. Zero disruption but 34 enterprise accounts need manual handling." },
+          { label: "Shadow + cutover", description: "Run both systems 7 days. Safest, but doubles infrastructure cost ($14k) and engineering effort." },
         ],
       },
       {
         prompt: "Feature flag granularity for the rollout?",
-        context: "Feature flags control who sees the new payment system. Granularity affects how targeted you can be with the rollout.",
+        context: "Feature flags control rollout targeting. Engineering estimates: per-tenant (2 days), per-user (5 days), percentage (1 day). Product wants per-user for beta program.",
         options: [
-          { label: "Per-tenant", description: "Enable Stripe per organization — simple but coarse" },
-          { label: "Per-user", description: "Enable per individual user — fine control, more complexity", recommended: true },
-          { label: "Percentage rollout", description: "Random 1% → 5% → 25% → 100% — standard but less targeted" },
+          { label: "Per-tenant", description: "Per organization — simple, 2 days. But can't target individual beta users." },
+          { label: "Per-user", description: "Per individual user — 5 days to build. Product team needs this for beta invites." },
+          { label: "Percentage rollout", description: "Random sampling — 1 day. Standard, but no way to guarantee specific users are included." },
         ],
       },
     ],
@@ -128,11 +129,11 @@ const INITIAL_AGENTS: Agent[] = [
     inputPrompts: [
       {
         prompt: "How should we handle the legacy payment_transactions table?",
-        context: "The existing table has 4.2M rows of historical data. New Stripe tables have a different schema.",
+        context: "The existing table has 4.2M rows. Finance team runs monthly reports on it. Compliance requires 7-year retention. The Architect Agent assumed we'd keep it, but that creates a dual-read problem for the billing dashboard.",
         options: [
-          { label: "Keep as-is", description: "Legacy table stays read-only, new data goes to Stripe tables", recommended: true },
-          { label: "Migrate data", description: "ETL historical records into new schema (complex, 2-3 hour migration)" },
-          { label: "Archive + fresh start", description: "Move to cold storage, start clean (simplest but loses quick access)" },
+          { label: "Keep as-is", description: "Legacy table stays read-only. Billing dashboard needs dual-read logic (extra complexity)." },
+          { label: "Migrate data", description: "ETL 4.2M records into new schema. 2-3 hour downtime. Risk of data corruption on edge cases." },
+          { label: "Archive + fresh start", description: "Move to cold storage. Finance loses quick access to historical queries until we build an archive viewer." },
         ],
       },
     ],
@@ -153,11 +154,11 @@ const INITIAL_AGENTS: Agent[] = [
     inputPrompts: [
       {
         prompt: "Webhook delivery guarantee strategy?",
-        context: "Stripe webhooks can be delivered multiple times. We need to handle idempotency and ordering.",
+        context: "Stripe webhooks can be delivered multiple times. Last month we had a duplicate charge incident caused by a similar system. VP of Engineering flagged this as P0.",
         options: [
-          { label: "Idempotency keys", description: "Store processed event IDs, skip duplicates (standard)", recommended: true },
-          { label: "Event sourcing", description: "Full event log with replay capability (robust but over-engineered)" },
-          { label: "At-least-once + dedup", description: "Accept duplicates, deduplicate at processing layer" },
+          { label: "Idempotency keys", description: "Store processed event IDs, skip duplicates. Standard but adds a DB lookup per webhook (latency concern at scale)." },
+          { label: "Event sourcing", description: "Full event log with replay. Robust, but over-engineered for current volume. Would take 3 extra days." },
+          { label: "At-least-once + dedup", description: "Accept duplicates, deduplicate at processing layer. Simplest, but the duplicate charge incident was exactly this pattern." },
         ],
       },
     ],
@@ -178,11 +179,11 @@ const INITIAL_AGENTS: Agent[] = [
     inputPrompts: [
       {
         prompt: "Checkout UX pattern?",
-        context: "Stripe offers multiple integration options with different user experiences.",
+        context: "Stripe offers multiple integration options. Design team prefers embedded (matches brand). Legal says hosted checkout reduces our PCI scope from SAQ A-EP to SAQ A (significant compliance difference).",
         options: [
-          { label: "Embedded Elements", description: "Inline form within our UI — seamless but more work", recommended: true },
-          { label: "Stripe Checkout", description: "Redirect to hosted Stripe page — quick but less branded" },
-          { label: "Custom form + Tokens", description: "Full custom UI with tokenization — most control, PCI implications" },
+          { label: "Embedded Elements", description: "Inline form — matches brand perfectly, but keeps us at PCI SAQ A-EP (annual audit required)." },
+          { label: "Stripe Checkout", description: "Redirect to Stripe-hosted page. Reduces PCI scope to SAQ A (self-assessment only). Breaks brand immersion." },
+          { label: "Custom form + Tokens", description: "Full custom UI. Maximum control, but we handle raw card data — PCI SAQ D (most expensive compliance tier)." },
         ],
       },
     ],
@@ -202,12 +203,13 @@ const INITIAL_AGENTS: Agent[] = [
     currentInputIdx: 0,
     inputPrompts: [
       {
-        prompt: "Test coverage threshold for launch approval?",
-        context: "Current codebase has 72% coverage. Payment code is critical infrastructure.",
+        prompt: "3 of 12 tests failing. How should we proceed?",
+        context: "Tests failing: (1) subscription downgrade with proration, (2) concurrent webhook race condition, (3) payment retry after card update. These are edge cases but they affect ~8% of transactions.",
+        severity: "warning",
         options: [
-          { label: "90% coverage", description: "High bar — thorough but may slow delivery", recommended: true },
-          { label: "80% coverage", description: "Balanced — covers critical paths, pragmatic" },
-          { label: "Critical paths only", description: "Test happy paths + known edge cases, ship faster" },
+          { label: "Fix and re-run", description: "Send back to Backend Agent to fix the 3 failing cases. Adds estimated 10-15 minutes." },
+          { label: "Ship with known gaps", description: "Document the 3 gaps, add monitoring alerts, fix post-launch. Faster but 8% of transactions at risk." },
+          { label: "Reduce scope", description: "Disable proration and retry features at launch. Simpler but removes functionality users expect." },
         ],
       },
     ],
@@ -227,12 +229,13 @@ const INITIAL_AGENTS: Agent[] = [
     currentInputIdx: 0,
     inputPrompts: [
       {
-        prompt: "Approve elevated access for PCI compliance scan",
-        context: "The security audit needs read access to production secret store and payment logs to verify no sensitive data exposure.",
+        prompt: "Critical: Stripe test key found in committed config file",
+        context: "Found STRIPE_TEST_KEY in src/config/stripe.ts line 4 (committed 3 days ago). This is a test key, not production, but it indicates the secret management pattern is wrong. The Backend Agent hardcoded it instead of using env vars.",
+        severity: "critical",
         options: [
-          { label: "Grant read-only access", description: "Allow access to vault and payment logs for this audit", recommended: true },
-          { label: "Staging only", description: "Run audit against staging environment (may miss prod-specific issues)" },
-          { label: "Request exception", description: "Skip production scan, document risk acceptance" },
+          { label: "Block and fix", description: "Stop all agents. Rotate the key, move to env vars, audit for other hardcoded secrets. Adds 20+ minutes." },
+          { label: "Flag and continue", description: "It's a test key — not a production risk. Create a follow-up ticket, continue with deployment." },
+          { label: "Fix inline", description: "Ask Backend Agent to fix just this file now. Don't block other agents. Risk: there may be other instances." },
         ],
       },
     ],
@@ -252,21 +255,22 @@ const INITIAL_AGENTS: Agent[] = [
     currentInputIdx: 0,
     inputPrompts: [
       {
-        prompt: "Ready to deploy — confirm rollout plan",
-        context: "All tests passing (12/12). Security audit clean. No blockers.",
+        prompt: "Deploy blocked: Schema Agent used 'payment_status' but Backend Agent used 'status'",
+        context: "Conflict detected. Schema migration creates column 'payment_status' on stripe_customers table. Backend service references column 'status'. This will cause a runtime error. Both agents completed successfully individually.",
+        severity: "critical",
         options: [
-          { label: "Deploy now", description: "Begin Phase 1 shadow mode deployment immediately" },
-          { label: "Schedule 2 AM UTC", description: "Deploy during low-traffic window tonight", recommended: true },
-          { label: "Hold for review", description: "Block deployment, request additional team review" },
+          { label: "Use 'payment_status'", description: "Keep Schema's version. Backend Agent will need to regenerate 3 files (~5 min)." },
+          { label: "Use 'status'", description: "Keep Backend's version. Schema Agent regenerates migration (~3 min). Risk: may conflict with existing 'status' column." },
+          { label: "Rename to 'stripe_status'", description: "Neither agent's version. Both regenerate. Clearest naming but adds 8 minutes." },
         ],
       },
       {
-        prompt: "Canary rollout percentage for Phase 2?",
-        context: "Shadow mode completed with 0 errors across 1,247 transactions. Ready to route real traffic.",
+        prompt: "Confirm deployment schedule",
+        context: "All issues resolved. 9/12 tests passing (3 edge cases deferred). Security finding flagged. It's Friday 4 PM.",
         options: [
-          { label: "1% canary", description: "Ultra-conservative — ~50 transactions/hour" },
-          { label: "5% canary", description: "Standard approach — ~250 transactions/hour", recommended: true },
-          { label: "10% canary", description: "Aggressive — ~500 transactions/hour, faster validation" },
+          { label: "Deploy now", description: "Begin shadow mode immediately. It's Friday afternoon — team may not be available if issues arise." },
+          { label: "Monday morning", description: "Wait until Monday 9 AM when full team is available. 2.5 days delay." },
+          { label: "Tonight 2 AM UTC", description: "Low-traffic window. On-call engineer available but it's a skeleton crew." },
         ],
       },
     ],
@@ -323,29 +327,32 @@ const AGENT_LOGS: Record<string, LogEntry[]> = {
   ],
   testing: [
     { time: "1:21", text: "Setting up Stripe test mode with fixtures", type: "action" },
-    { time: "1:25", text: "Test: successful one-time payment flow", type: "output" },
-    { time: "1:28", text: "Test: subscription upgrade/downgrade", type: "output" },
-    { time: "1:31", text: "Test: webhook signature verification", type: "output" },
-    { time: "1:34", text: "Test: failed payment → retry → success", type: "output" },
-    { time: "1:37", text: "Test: concurrent payment race condition", type: "output" },
-    { time: "1:40", text: "All 12 integration tests passing ✓", type: "success" },
+    { time: "1:25", text: "Test: successful one-time payment flow ✔", type: "output" },
+    { time: "1:28", text: "Test: subscription upgrade ✔", type: "output" },
+    { time: "1:31", text: "Test: webhook signature verification ✔", type: "output" },
+    { time: "1:33", text: "FAIL: subscription downgrade with proration — amount mismatch", type: "warning" },
+    { time: "1:35", text: "FAIL: concurrent webhook race condition — duplicate charge", type: "warning" },
+    { time: "1:37", text: "FAIL: payment retry after card update — stale token", type: "warning" },
+    { time: "1:39", text: "Test: refund flow ✔", type: "output" },
+    { time: "1:40", text: "9 passing, 3 failing — review required", type: "warning" },
   ],
   security: [
     { time: "1:44", text: "Scanning for PCI DSS compliance requirements...", type: "info" },
     { time: "1:48", text: "Verifying: no raw card numbers stored", type: "output" },
     { time: "1:51", text: "Checking webhook signature validation", type: "action" },
-    { time: "1:54", text: "Auditing secret storage: STRIPE_SECRET_KEY in vault ✓", type: "output" },
-    { time: "1:57", text: "Scanning for exposed keys in git history...", type: "action" },
-    { time: "2:00", text: "Verifying TLS 1.2+ enforcement", type: "output" },
-    { time: "2:03", text: "Security audit passed — no critical findings", type: "success" },
+    { time: "1:54", text: "CRITICAL: Stripe test key hardcoded in src/config/stripe.ts:4", type: "warning" },
+    { time: "1:57", text: "Key was committed 3 days ago by Backend Agent", type: "warning" },
+    { time: "2:00", text: "Checking if key was rotated... NOT rotated", type: "warning" },
+    { time: "2:03", text: "Audit blocked — secret management issue requires resolution", type: "warning" },
   ],
   deploy: [
-    { time: "2:10", text: "Preparing deployment manifest for staged rollout", type: "action" },
-    { time: "2:14", text: "Phase 1: Shadow mode (dual-write, compare)", type: "output" },
-    { time: "2:17", text: "Phase 2: Canary 5% → monitor error rates", type: "output" },
-    { time: "2:20", text: "Phase 3: Full cutover, old system on standby", type: "output" },
-    { time: "2:23", text: "Configuring rollback trigger (error rate > 2%)", type: "action" },
-    { time: "2:26", text: "Deployment plan ready — awaiting execution", type: "success" },
+    { time: "2:10", text: "Validating dependencies before deploy...", type: "action" },
+    { time: "2:12", text: "CONFLICT: Schema column 'payment_status' vs Backend column 'status'", type: "warning" },
+    { time: "2:14", text: "Agents produced incompatible database schema references", type: "warning" },
+    { time: "2:17", text: "Waiting for conflict resolution...", type: "info" },
+    { time: "2:20", text: "Preparing deployment manifest for staged rollout", type: "action" },
+    { time: "2:23", text: "Phase 1: Shadow mode (dual-write, compare)", type: "output" },
+    { time: "2:26", text: "Deployment plan ready — pending schedule confirmation", type: "success" },
   ],
 };
 
@@ -381,14 +388,14 @@ const AGENT_FILE_CHANGES: Record<string, FileChange[]> = {
 };
 
 const AGENT_SUMMARIES: Record<string, string> = {
-  research: "Mapped 23 payment files, 4 API endpoints, 3 webhooks. Stripe migration path identified with 2 breaking changes in billing logic.",
-  architect: "3-phase rollout plan: shadow → canary (5%) → full cutover. Feature flag per-tenant. Auto-rollback at 2% error rate.",
-  schema: "4 new tables, 1 altered table. All migrations reversible. Zero data loss guaranteed.",
-  backend: "8 files changed (+464/-12 lines). Stripe SDK integrated with idempotency, retries, and webhook handling.",
+  research: "Mapped 23 payment files, 4 API endpoints, 3 webhooks. Stripe migration path identified with 2 breaking changes in billing logic. Risk: subscription proration handling differs significantly.",
+  architect: "3-phase rollout plan: shadow → canary (5%) → full cutover. Feature flag per-tenant. Auto-rollback at 2% error rate. Note: 34 enterprise accounts need manual handling regardless of strategy.",
+  schema: "4 new tables, 1 altered table. All migrations reversible. Used column name 'payment_status' for consistency with existing conventions.",
+  backend: "8 files changed (+464/-12 lines). Stripe SDK integrated with idempotency, retries, and webhook handling. Note: used column name 'status' for brevity.",
   frontend: "5 components built. Stripe Elements checkout, payment management, billing history. Responsive + accessible.",
-  testing: "12 integration tests covering happy paths, edge cases, and race conditions. All passing.",
-  security: "PCI DSS Level 1 compliant. No raw card data stored. Secrets in vault. TLS 1.2+ enforced.",
-  deploy: "Staged rollout configured. Shadow mode → 5% canary → full cutover. Auto-rollback ready.",
+  testing: "9 of 12 tests passing. 3 failures in edge cases: proration, race condition, stale token. Affects ~8% of transaction scenarios.",
+  security: "BLOCKER: Stripe test key hardcoded in config (committed by Backend Agent). Not production key, but indicates broken secret management pattern. Must resolve before deploy.",
+  deploy: "Staged rollout configured. Conflict detected between Schema and Backend agents on column naming. Requires manual resolution before execution.",
 };
 
 const COLUMNS: { key: AgentStatus; label: string; color: string; icon: string }[] = [
@@ -415,9 +422,11 @@ export default function AgentOrchestrationBoardV2Page() {
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [missionTime, setMissionTime] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [totalTokens, setTotalTokens] = useState(0);
   const [missionStarted, setMissionStarted] = useState(false);
+  const [budgetWarningDismissed, setBudgetWarningDismissed] = useState(false);
+  const [tokenLimit, setTokenLimit] = useState(15000);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -479,7 +488,7 @@ export default function AgentOrchestrationBoardV2Page() {
 
     tickRef.current = setInterval(() => {
       const now = Date.now();
-      setMissionTime(now - startTimeRef.current);
+      setElapsedTime(now - startTimeRef.current);
 
       setAgents((prev) => {
         const next = prev.map((a) => ({ ...a, logs: [...a.logs] }));
@@ -539,7 +548,7 @@ export default function AgentOrchestrationBoardV2Page() {
       a.dependencies.length === 0 ? { ...a, status: "ready" as AgentStatus } : a
     );
     setAgents(withReady);
-    setMissionTime(0);
+    setElapsedTime(0);
     setTotalTokens(0);
     setMissionStarted(true);
     startTimeRef.current = Date.now();
@@ -598,6 +607,10 @@ export default function AgentOrchestrationBoardV2Page() {
   }
 
   const selectedAgentData = selectedAgent ? agents.find((a) => a.id === selectedAgent) : null;
+  const selectedPrompt =
+    selectedAgentData?.status === "needs-input"
+      ? selectedAgentData.inputPrompts[selectedAgentData.currentInputIdx]
+      : undefined;
 
   const hoveredDeps = hoveredAgent
     ? agents.find((a) => a.id === hoveredAgent)?.dependencies ?? []
@@ -616,30 +629,29 @@ export default function AgentOrchestrationBoardV2Page() {
 
   return (
     <div className={styles.board}>
-      {/* Mission header */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <div className={styles.missionTitle}>
-            <Codicon name="rocket" className={styles.missionIcon} />
+          <div className={styles.taskTitle}>
+            <Codicon name="tasklist" className={styles.taskIcon} />
             <span>Migrate Payments to Stripe</span>
             {isRunning && agents.some((a) => a.status === "running") && (
               <span className={styles.liveTag}>
                 <span className={styles.liveDot} />
-                Live
+                Running
               </span>
             )}
           </div>
-          <div className={styles.missionMeta}>
+          <div className={styles.taskMeta}>
             {missionStarted && (
               <>
                 <span className={styles.metaItem}>
                   <Codicon name="check" />
                   {completedCount}/{agents.length} complete
                 </span>
-                {missionTime > 0 && (
+                {elapsedTime > 0 && (
                   <span className={styles.metaItem}>
                     <Codicon name="clock" />
-                    {formatElapsed(missionTime)}
+                    {formatElapsed(elapsedTime)}
                   </span>
                 )}
                 {totalTokens > 0 && (
@@ -674,7 +686,7 @@ export default function AgentOrchestrationBoardV2Page() {
           {!missionStarted && (
             <button className={styles.startButton} onClick={startMission}>
               <Codicon name="play" />
-              <span>Start Mission</span>
+              <span>Run All</span>
             </button>
           )}
           {allCompleted && (
@@ -685,6 +697,41 @@ export default function AgentOrchestrationBoardV2Page() {
           )}
         </div>
       </div>
+
+      {/* Budget warning */}
+      {(() => {
+        const warnThreshold = tokenLimit * 0.55;
+        const overLimit = totalTokens >= tokenLimit;
+        const show = totalTokens > warnThreshold && (!budgetWarningDismissed || overLimit);
+        if (!show) return null;
+        return (
+          <div className={`${styles.budgetWarning} ${overLimit ? styles.budgetWarningOver : ""}`}>
+            <Codicon name={overLimit ? "error" : "warning"} className={styles.budgetIcon} />
+            <span className={styles.budgetText}>
+              {overLimit ? (
+                <>
+                  Token usage (<strong>{formatTokens(totalTokens)}</strong>) has exceeded the workspace
+                  limit ({formatTokens(tokenLimit)}). Raise the limit to keep the remaining agents running.
+                </>
+              ) : (
+                <>
+                  Token usage (<strong>{formatTokens(totalTokens)}</strong>) is approaching the workspace
+                  limit ({formatTokens(tokenLimit)}).
+                </>
+              )}
+            </span>
+            <button className={styles.budgetDismiss} onClick={() => setBudgetWarningDismissed(true)}>
+              Dismiss
+            </button>
+            <button
+              className={styles.budgetAction}
+              onClick={() => { setTokenLimit((l) => l + 15000); setBudgetWarningDismissed(false); }}
+            >
+              +15k limit
+            </button>
+          </div>
+        );
+      })()}
 
       {/* Phase indicator */}
       {missionStarted && (
@@ -709,7 +756,7 @@ export default function AgentOrchestrationBoardV2Page() {
 
       <div className={styles.mainArea}>
         {/* Kanban columns */}
-        <div className={`${styles.columns} ${selectedAgent ? styles.columnsWithPanel : ""}`}>
+        <div className={styles.columns}>
           {COLUMNS.map((col) => {
             const columnAgents = getColumnAgents(col.key);
             return (
@@ -743,11 +790,15 @@ export default function AgentOrchestrationBoardV2Page() {
                     const isSelected = selectedAgent === agent.id;
                     const isHighlighted = isHovered || isDep || isDependent;
                     const isDimmed = hoveredAgent !== null && !isHighlighted;
+                    const promptSeverity =
+                      agent.status === "needs-input"
+                        ? agent.inputPrompts[agent.currentInputIdx]?.severity
+                        : undefined;
 
                     return (
                       <div
                         key={agent.id}
-                        className={`${styles.card} ${styles[`card_${agent.status.replace("-", "")}`]} ${isDimmed ? styles.cardDimmed : ""} ${isHighlighted ? styles.cardHighlighted : ""} ${isSelected ? styles.cardSelected : ""}`}
+                        className={`${styles.card} ${styles[`card_${agent.status.replace("-", "")}`]} ${promptSeverity ? styles[`cardSeverity_${promptSeverity}`] : ""} ${isDimmed ? styles.cardDimmed : ""} ${isHighlighted ? styles.cardHighlighted : ""} ${isSelected ? styles.cardSelected : ""}`}
                         onMouseEnter={() => handleCardEnter(agent.id)}
                         onMouseLeave={handleCardLeave}
                         onClick={() => setSelectedAgent(isSelected ? null : agent.id)}
@@ -774,8 +825,8 @@ export default function AgentOrchestrationBoardV2Page() {
                               </span>
                             )}
                             {agent.status === "needs-input" && (
-                              <span className={styles.cardAlert}>
-                                <Codicon name="bell" />
+                              <span className={`${styles.cardAlert} ${promptSeverity ? styles[`cardAlert_${promptSeverity}`] : ""}`}>
+                                <Codicon name={promptSeverity === "critical" ? "error" : promptSeverity === "warning" ? "warning" : "bell"} />
                               </span>
                             )}
                             {agent.status === "ready" && (
@@ -820,9 +871,16 @@ export default function AgentOrchestrationBoardV2Page() {
                         )}
 
                         {agent.status === "needs-input" && (
-                          <div className={styles.inputHint}>
-                            <Codicon name="comment-discussion" />
-                            <span>{agent.inputPrompts[agent.currentInputIdx]?.prompt}</span>
+                          <div className={`${styles.inputHint} ${promptSeverity ? styles[`inputHint_${promptSeverity}`] : ""}`}>
+                            {promptSeverity ? (
+                              <span className={`${styles.severityTag} ${styles[`severityTag_${promptSeverity}`]}`}>
+                                <Codicon name={promptSeverity === "critical" ? "error" : "warning"} />
+                                <span>{promptSeverity === "critical" ? "Blocker" : "Failure"}</span>
+                              </span>
+                            ) : (
+                              <Codicon name="comment-discussion" />
+                            )}
+                            <span className={styles.inputHintText}>{agent.inputPrompts[agent.currentInputIdx]?.prompt}</span>
                             <Codicon name="chevron-right" className={styles.inputHintArrow} />
                           </div>
                         )}
@@ -920,7 +978,17 @@ export default function AgentOrchestrationBoardV2Page() {
               )}
 
               {selectedAgentData.status === "needs-input" && (
-                <div className={styles.panelInputSection}>
+                <div className={`${styles.panelInputSection} ${selectedPrompt?.severity ? styles[`panelInputSection_${selectedPrompt.severity}`] : ""}`}>
+                  {selectedPrompt?.severity && (
+                    <div className={`${styles.panelSeverityBanner} ${styles[`panelSeverityBanner_${selectedPrompt.severity}`]}`}>
+                      <Codicon name={selectedPrompt.severity === "critical" ? "error" : "warning"} />
+                      <span>
+                        {selectedPrompt.severity === "critical"
+                          ? "Blocker — this agent halted on a failure and can't continue until you resolve it"
+                          : "Failure detected — the agent surfaced a problem that needs your call"}
+                      </span>
+                    </div>
+                  )}
                   <div className={styles.panelInputPrompt}>
                     {selectedAgentData.inputPrompts[selectedAgentData.currentInputIdx]?.prompt}
                   </div>
@@ -980,7 +1048,7 @@ export default function AgentOrchestrationBoardV2Page() {
                   <p className={styles.panelActionHint}>
                     Approving unblocks {getDependents(selectedAgentData.id).length > 0
                       ? getDependents(selectedAgentData.id).join(", ")
-                      : "mission completion"}.
+                      : "task completion"}.
                   </p>
                 </div>
               )}
@@ -1013,16 +1081,15 @@ export default function AgentOrchestrationBoardV2Page() {
         )}
       </div>
 
-      {/* Welcome state */}
       {!missionStarted && (
         <div className={styles.welcomeOverlay}>
           <div className={styles.welcomePanel}>
             <div className={styles.welcomeIcon}>
-              <Codicon name="rocket" />
+              <Codicon name="hubot" />
             </div>
             <h2 className={styles.welcomeTitle}>Migrate Payments to Stripe</h2>
             <p className={styles.welcomeDesc}>
-              8 specialized AI agents will collaborate to migrate your payment infrastructure from PayPal Legacy to Stripe. You&apos;ll guide key decisions, approve outputs, and control the pace.
+              Copilot will coordinate 8 specialized agents to migrate your payment infrastructure from PayPal Legacy to Stripe. You&apos;ll guide key decisions, review outputs, and approve each step.
             </p>
             <div className={styles.welcomeAgents}>
               {INITIAL_AGENTS.map((a) => (
@@ -1048,7 +1115,7 @@ export default function AgentOrchestrationBoardV2Page() {
             </div>
             <button className={styles.welcomeStart} onClick={startMission}>
               <Codicon name="play" />
-              <span>Start Mission</span>
+              <span>Start</span>
             </button>
           </div>
         </div>
