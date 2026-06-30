@@ -1,0 +1,7 @@
+{
+  "title": "AI Model Garden Weights Training Studio",
+  "description": "A VS Code-style studio for curating model variants, adjusting training weights, and monitoring live optimization runs.",
+  "author": "Team",
+  "tags": ["ai", "models", "training", "studio"],
+  "createdAt": "2026-06-30"
+}

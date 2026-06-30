@@ -1,5 +1,20 @@
 [
   {
+    "slug": "ai-model-garden-weights-training-studio",
+    "title": "AI Model Garden Weights Training Studio",
+    "description": "A VS Code-style studio for curating model variants, adjusting training weights, and monitoring live optimization runs.",
+    "author": "Team",
+    "tags": [
+      "ai",
+      "models",
+      "training",
+      "studio"
+    ],
+    "createdAt": "2026-06-30",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
     "slug": "copilot-pmf-survey",
     "title": "Copilot PMF Survey",
     "description": "Reimagined in-product PMF survey for GitHub Copilot — single-page editor tab with 5-point Likert scale, radio/checkbox option lists, and mock editor chrome.",
