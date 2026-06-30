@@ -15,6 +15,12 @@ type Model = {
   learningRate: number;
 };
 
+type Weights = {
+  dataBlend: number;
+  regularization: number;
+  learningRate: number;
+};
+
 const INITIAL_MODELS: Model[] = [
   {
     id: "nova-vision-lite",
@@ -57,6 +63,7 @@ const INITIAL_MODELS: Model[] = [
     learningRate: 35,
   },
 ];
+const DEFAULT_ACTIVE_MODEL_ID = INITIAL_MODELS[1]?.id ?? INITIAL_MODELS[0]?.id ?? "";
 
 function statusIcon(status: Model["status"]) {
   if (status === "ready") return "check";
@@ -65,17 +72,33 @@ function statusIcon(status: Model["status"]) {
 }
 
 export default function AiModelGardenWeightsTrainingStudioPage() {
-  const [models] = useState(INITIAL_MODELS);
-  const [activeModelId, setActiveModelId] = useState(models[1]?.id ?? models[0].id);
+  const [activeModelId, setActiveModelId] = useState(DEFAULT_ACTIVE_MODEL_ID);
   const activeModel = useMemo(
-    () => models.find((model) => model.id === activeModelId) ?? models[0],
-    [activeModelId, models]
+    () => INITIAL_MODELS.find((model) => model.id === activeModelId),
+    [activeModelId]
   );
-
-  const [dataBlend, setDataBlend] = useState(activeModel.dataBlend);
-  const [regularization, setRegularization] = useState(activeModel.regularization);
-  const [learningRate, setLearningRate] = useState(activeModel.learningRate);
+  const [weightsByModel, setWeightsByModel] = useState<Record<string, Weights>>(() =>
+    Object.fromEntries(
+      INITIAL_MODELS.map((model) => [
+        model.id,
+        {
+          dataBlend: model.dataBlend,
+          regularization: model.regularization,
+          learningRate: model.learningRate,
+        },
+      ])
+    )
+  );
   const [autoTune, setAutoTune] = useState(true);
+  if (!activeModel) {
+    return <div className={styles.studio}>No models in this garden.</div>;
+  }
+
+  const activeWeights = weightsByModel[activeModel.id] ?? {
+    dataBlend: activeModel.dataBlend,
+    regularization: activeModel.regularization,
+    learningRate: activeModel.learningRate,
+  };
 
   return (
     <div className={styles.studio}>
@@ -97,21 +120,16 @@ export default function AiModelGardenWeightsTrainingStudioPage() {
         <aside className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2>Model Garden</h2>
-            <span>{models.length} models</span>
+            <span>{INITIAL_MODELS.length} models</span>
           </div>
           <div className={styles.modelList}>
-            {models.map((model) => {
+            {INITIAL_MODELS.map((model) => {
               const active = model.id === activeModelId;
               return (
                 <button
                   key={model.id}
                   className={`${styles.modelItem} ${active ? styles.modelItemActive : ""}`}
-                  onClick={() => {
-                    setActiveModelId(model.id);
-                    setDataBlend(model.dataBlend);
-                    setRegularization(model.regularization);
-                    setLearningRate(model.learningRate);
-                  }}
+                  onClick={() => setActiveModelId(model.id)}
                 >
                   <div className={styles.modelTitleRow}>
                     <span>{model.name}</span>
@@ -146,10 +164,18 @@ export default function AiModelGardenWeightsTrainingStudioPage() {
                 type="range"
                 min={0}
                 max={100}
-                value={dataBlend}
-                onChange={(event) => setDataBlend(Number(event.target.value))}
+                value={activeWeights.dataBlend}
+                onChange={(event) =>
+                  setWeightsByModel((prev) => ({
+                    ...prev,
+                    [activeModel.id]: {
+                      ...activeWeights,
+                      dataBlend: Number(event.target.value),
+                    },
+                  }))
+                }
               />
-              <strong>{dataBlend}%</strong>
+              <strong>{activeWeights.dataBlend}%</strong>
             </label>
 
             <label className={styles.sliderRow}>
@@ -158,10 +184,18 @@ export default function AiModelGardenWeightsTrainingStudioPage() {
                 type="range"
                 min={0}
                 max={100}
-                value={regularization}
-                onChange={(event) => setRegularization(Number(event.target.value))}
+                value={activeWeights.regularization}
+                onChange={(event) =>
+                  setWeightsByModel((prev) => ({
+                    ...prev,
+                    [activeModel.id]: {
+                      ...activeWeights,
+                      regularization: Number(event.target.value),
+                    },
+                  }))
+                }
               />
-              <strong>{regularization}%</strong>
+              <strong>{activeWeights.regularization}%</strong>
             </label>
 
             <label className={styles.sliderRow}>
@@ -170,10 +204,18 @@ export default function AiModelGardenWeightsTrainingStudioPage() {
                 type="range"
                 min={0}
                 max={100}
-                value={learningRate}
-                onChange={(event) => setLearningRate(Number(event.target.value))}
+                value={activeWeights.learningRate}
+                onChange={(event) =>
+                  setWeightsByModel((prev) => ({
+                    ...prev,
+                    [activeModel.id]: {
+                      ...activeWeights,
+                      learningRate: Number(event.target.value),
+                    },
+                  }))
+                }
               />
-              <strong>{learningRate}%</strong>
+              <strong>{activeWeights.learningRate}%</strong>
             </label>
           </div>
 
