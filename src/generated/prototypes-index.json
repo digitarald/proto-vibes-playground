@@ -1,5 +1,39 @@
 [
   {
+    "slug": "copilot-pmf-survey",
+    "title": "Copilot PMF Survey",
+    "description": "Reimagined in-product PMF survey for GitHub Copilot — single-page editor tab with 5-point Likert scale, radio/checkbox option lists, and mock editor chrome.",
+    "author": "Team",
+    "tags": [
+      "survey",
+      "pmf",
+      "copilot",
+      "interactive"
+    ],
+    "createdAt": "2026-06-18",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
+    "slug": "copilot-pmf-survey-v2-compact",
+    "title": "Copilot PMF Survey v2 — Compact",
+    "description": "Compact variant of the PMF survey with shorter labels (≤4 words) and a reduced option set for faster completion.",
+    "author": "Team",
+    "tags": [
+      "survey",
+      "pmf",
+      "copilot",
+      "compact"
+    ],
+    "createdAt": "2026-06-18",
+    "hasDesign": true,
+    "variant": {
+      "parentSlug": "copilot-pmf-survey",
+      "version": 2,
+      "descriptor": "compact"
+    }
+  },
+  {
     "slug": "voice-mode-input",
     "title": "Voice Mode Input",
     "description": "Siri-like voice mode for chat input with frequency-based gradient animation driven by mic input, designed for developer workflows.",
