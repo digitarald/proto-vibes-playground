@@ -70,7 +70,7 @@
   cursor: pointer;
   display: flex;
   padding: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 .navBtn:hover {
   color: var(--foreground);
@@ -87,7 +87,7 @@
   justify-content: center;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 0.75rem;
   color: var(--foreground);
 }
@@ -304,7 +304,7 @@
   cursor: pointer;
   display: flex;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 .dismiss:hover {
   color: var(--foreground);
@@ -389,9 +389,9 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--success) 40%, transparent);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--success) 10%, transparent);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
   animation: surveyIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .thanksIcon {
@@ -400,8 +400,8 @@
 }
 .thanksTitle {
   color: var(--foreground-bright);
-  font-weight: 500;
-  font-size: 0.9375rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
 }
 .thanksSub {
   color: var(--muted);
@@ -506,7 +506,7 @@
   background: color-mix(in srgb, var(--card) 90%, transparent);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   z-index: 20;
   white-space: nowrap;
@@ -529,7 +529,7 @@
   color: var(--muted);
   font-size: 0.75rem;
   cursor: pointer;
-  transition: all 0.14s ease;
+  transition: background 0.12s ease, border-color 0.12s ease;
   white-space: nowrap;
 }
 .switchBtn:hover {
