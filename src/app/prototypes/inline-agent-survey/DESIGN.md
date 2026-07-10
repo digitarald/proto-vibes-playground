@@ -20,7 +20,7 @@ The prototype renders a realistic agent session (the very session that filed #83
 
 ## Structure
 
-The surface is a VS Code agent session window: title bar + command center, session header, scrollable transcript ending in the completed work, then the inline survey, then the composer. The survey block sits flush in the thread with a thin accent left-border to read as "agent chrome," not a card.
+The surface is a VS Code agent session window: title bar + command center, session header, scrollable transcript ending in the completed work, then the inline survey, then the composer. The survey block sits flush in the thread with a clean uniform 1px border to read as "agent chrome," not a card.
 
 | Zone | Treatment |
 |---|---|
@@ -45,7 +45,7 @@ All four share the progressive follow-up; they differ only in the primary rating
 
 1. **One-tap happy path** — a positive rating auto-submits; only non-positive ratings open the follow-up. ✅ Keeps the common case frictionless while the negative path becomes the diagnostic on-ramp.
 2. **Compact, VS Code-native controls** — ✅ 4px-radius secondary buttons at 12px, quiet accent highlight for the selected state. ❌ First pass used 999px pills with saturated green/amber/red sentiment tints and emoji — read as generic AI/marketing UI, not editor-native. Lesson: match VS Code's density and restraint (small radius, one accent for selection, status colors reserved for status text — not control fills, Codicons over emoji).
-3. **Inline, not modal** — ✅ accent left-border + flush placement in the thread reads as native agent output. Avoids the "survey capturing a keystroke meant for the prompt" input-ambiguity failure mode by keeping it out of the composer.
+3. **Inline, not modal** — ✅ a uniform 1px-bordered block placed flush in the thread reads as native agent output. ❌ An accent left-border (2px) fought the corner radius and left an ugly mitered seam — mixed-width borders + `border-radius` don't mix. Avoids the "survey capturing a keystroke meant for the prompt" input-ambiguity failure mode by keeping it out of the composer.
 4. **First-class dismiss** — ✅ a persistent × plus a quiet "skipped / Undo" state keeps opt-out symmetric with participation (a failure mode called out in the issue's prior-art notes).
 
 ## Scenario / Demo Flow

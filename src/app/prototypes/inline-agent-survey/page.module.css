@@ -221,7 +221,6 @@
 .survey {
   margin-top: 6px;
   border: 1px solid var(--border);
-  border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--card) 70%, transparent);
   padding: 12px 14px;

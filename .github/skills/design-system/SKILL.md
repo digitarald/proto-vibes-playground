@@ -336,6 +336,7 @@ These are the recurring tells that make a prototype look "AI-vibed" instead of V
 | Emoji as buttons/affordances (👍 😐 👎) | Codicons |
 | Glowing focus halos, big soft drop shadows on everything | 1px accent focus border; stealth shadows only on floating layers |
 | Gradient fills, decorative color | Restrained palette; accent reserved for interaction |
+| Accent left-bar via mixed-width border (`border-left: 2px` + radius) — mitered corner seam | Uniform 1px border; if an accent edge is needed use `box-shadow: inset` so it respects the radius |
 | Bright white body text everywhere | `--foreground` (`#bfbfbf`); reserve `--foreground-bright` for emphasis |
 
 When in doubt, look at how the equivalent real VS Code surface (a Quick Pick, the Source Control input, a notification toast) is styled and match its restraint.
