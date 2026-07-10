@@ -1,0 +1,7 @@
+{
+  "title": "Agent Sessions Progress",
+  "description": "Live progress bars under each session in the Agents window sidebar — at-a-glance triage of which agent sessions are running, blocked on input, or done.",
+  "author": "Team",
+  "tags": ["agents", "sidebar", "progress", "sessions"],
+  "createdAt": "2026-06-26"
+}

@@ -1,5 +1,50 @@
 [
   {
+    "slug": "inline-agent-survey",
+    "title": "Inline Agent Quality Survey",
+    "description": "Lightweight, in-situ quality survey that surfaces at agent session boundaries — with a floating switcher to compare rating-format variations (outcome 3-point, sentiment, descriptive chips, 5-point scale) directly in context.",
+    "author": "digitarald",
+    "tags": [
+      "survey",
+      "agent",
+      "feedback",
+      "interactive"
+    ],
+    "createdAt": "2026-07-10",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
+    "slug": "welcome-plugin-onboarding",
+    "title": "Welcome — Plugin Onboarding",
+    "description": "A VS Code welcome tab that guides new users through a stepped onboarding flow: pick your focus, install a curated set of recommended plugins with live progress, and land in a ready-to-code workspace.",
+    "author": "Team",
+    "tags": [
+      "onboarding",
+      "welcome",
+      "plugins",
+      "extensions"
+    ],
+    "createdAt": "2026-07-08",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
+    "slug": "agent-sessions-progress",
+    "title": "Agent Sessions Progress",
+    "description": "Live progress bars under each session in the Agents window sidebar — at-a-glance triage of which agent sessions are running, blocked on input, or done.",
+    "author": "Team",
+    "tags": [
+      "agents",
+      "sidebar",
+      "progress",
+      "sessions"
+    ],
+    "createdAt": "2026-06-26",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
     "slug": "agent-orchestration-board-v2-usertesting",
     "title": "Agent Orchestration Board — User Testing",
     "description": "High-fidelity clickable prototype with real-world mock data for user testing and investor demos. Rich interactions, live output logs, and auto-playing simulation.",
@@ -11,7 +56,7 @@
       "user-testing"
     ],
     "createdAt": "2026-06-22",
-    "hasDesign": false,
+    "hasDesign": true,
     "variant": {
       "parentSlug": "agent-orchestration-board",
       "version": 2,

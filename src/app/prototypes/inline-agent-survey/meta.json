@@ -1,0 +1,7 @@
+{
+  "title": "Inline Agent Quality Survey",
+  "description": "Lightweight, in-situ quality survey that surfaces at agent session boundaries — with a floating switcher to compare rating-format variations (outcome 3-point, sentiment, descriptive chips, 5-point scale) directly in context.",
+  "author": "digitarald",
+  "tags": ["survey", "agent", "feedback", "interactive"],
+  "createdAt": "2026-07-10"
+}

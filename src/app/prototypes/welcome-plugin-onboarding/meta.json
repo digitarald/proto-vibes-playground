@@ -1,0 +1,7 @@
+{
+  "title": "Welcome — Plugin Onboarding",
+  "description": "A VS Code welcome tab that guides new users through a stepped onboarding flow: pick your focus, install a curated set of recommended plugins with live progress, and land in a ready-to-code workspace.",
+  "author": "Team",
+  "tags": ["onboarding", "welcome", "plugins", "extensions"],
+  "createdAt": "2026-07-08"
+}

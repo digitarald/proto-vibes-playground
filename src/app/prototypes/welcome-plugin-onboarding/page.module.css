@@ -1,0 +1,697 @@
+/* ================================================================== */
+/*  Welcome — Plugin Onboarding                                        */
+/* ================================================================== */
+
+.page {
+  min-height: 100vh;
+  background: var(--background);
+  display: flex;
+  flex-direction: column;
+  color: var(--foreground);
+}
+
+/* --- Editor tab strip (real-surface framing) ---------------------- */
+
+.tabstrip {
+  display: flex;
+  align-items: stretch;
+  height: 35px;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--border);
+  padding-left: 0.5rem;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+  height: 100%;
+  background: var(--background);
+  border-right: 1px solid var(--border);
+  font-size: 0.8125rem;
+  color: var(--foreground-bright);
+  position: relative;
+}
+
+.tab::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--accent);
+}
+
+.tabIcon {
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.tabClose {
+  font-size: 13px;
+  color: var(--muted);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.tabClose:hover {
+  background: var(--hover);
+  color: var(--foreground-bright);
+}
+
+/* --- Canvas ------------------------------------------------------- */
+
+.canvas {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1.5rem 4rem;
+  overflow-y: auto;
+
+  background:
+    radial-gradient(
+      120% 80% at 50% -10%,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 60%
+    ),
+    var(--background);
+}
+
+.shell {
+  width: 100%;
+  max-width: 44rem;
+}
+
+/* --- Header ------------------------------------------------------- */
+
+.header {
+  margin-bottom: 2.5rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.logoMark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 24px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent);
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--foreground-bright);
+  line-height: 1.1;
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+/* --- Stepper ------------------------------------------------------ */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.stepDot {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+  background: var(--card);
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.stepLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+  transition: color 0.25s ease;
+}
+
+.stepBar {
+  width: 2.5rem;
+  height: 2px;
+  border-radius: 1px;
+  margin: 0 0.75rem;
+  background: var(--border);
+  transition: background 0.3s ease;
+}
+
+.stepItem[data-state="active"] .stepDot {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.stepItem[data-state="active"] .stepLabel {
+  color: var(--foreground-bright);
+}
+
+.stepItem[data-state="done"] .stepDot {
+  background: color-mix(in srgb, var(--success) 22%, transparent);
+  color: var(--success);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 45%, transparent);
+}
+.stepItem[data-state="done"] .stepLabel {
+  color: var(--foreground);
+}
+.stepItem[data-state="done"] .stepBar {
+  background: color-mix(in srgb, var(--success) 40%, transparent);
+}
+
+/* --- Step pane transitions ---------------------------------------- */
+
+.stepPane {
+  animation: paneIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes paneIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.paneHead {
+  margin-bottom: 1.75rem;
+}
+
+.paneTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+
+.paneCopy {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin-top: 0.5rem;
+  max-width: 34rem;
+}
+
+/* --- Step 1: Focus grid ------------------------------------------- */
+
+.focusGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.875rem;
+}
+
+.focusCard {
+  --focus-accent: var(--accent);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition: transform 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.focusCard:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--focus-accent) 45%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+
+.focusCard[data-selected="true"] {
+  border-color: var(--focus-accent);
+  background: color-mix(in srgb, var(--focus-accent) 9%, var(--card));
+  box-shadow: 0 0 0 1px var(--focus-accent),
+    0 0 22px color-mix(in srgb, var(--focus-accent) 24%, transparent);
+}
+
+.focusIcon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  font-size: 20px;
+  color: var(--focus-accent);
+  background: color-mix(in srgb, var(--focus-accent) 15%, transparent);
+}
+
+.focusLabel {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+
+.focusTagline {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.focusCheck {
+  position: absolute;
+  top: 0.875rem;
+  right: 0.875rem;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 12px;
+  color: #fff;
+  background: var(--focus-accent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.focusCard[data-selected="true"] .focusCheck {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* --- Step 2: Plugin list ------------------------------------------ */
+
+.pluginList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pluginRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition: border-color 0.2s ease, background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pluginRow[data-selected="true"] {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--card));
+}
+
+.pluginRow[data-status="installed"] {
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+  background: color-mix(in srgb, var(--success) 6%, var(--card));
+}
+
+.iconTile {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--background);
+  box-shadow: inset 0 0 0 1px var(--border);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  overflow: hidden;
+}
+
+.iconTile img {
+  border-radius: 4px;
+}
+
+.pluginMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.pluginTop {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pluginName {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+
+.recBadge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.pluginDesc {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-top: 0.2rem;
+}
+
+.pluginMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.pluginMeta .codicon {
+  font-size: 12px;
+  vertical-align: -1px;
+}
+
+.metaPublisher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--foreground);
+}
+
+.verified {
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.star {
+  color: var(--warning);
+}
+
+.metaDot {
+  opacity: 0.5;
+}
+
+/* progress bar */
+.progressTrack {
+  margin-top: 0.6rem;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 0.22s ease;
+}
+
+/* --- Plugin actions ----------------------------------------------- */
+
+.pluginAction {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+}
+
+.checkbox {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: #fff;
+  font-size: 13px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--border);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.checkbox:hover {
+  box-shadow: inset 0 0 0 1.5px
+    color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.checkbox[data-checked="true"] {
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.installedPill,
+.installingPill,
+.queuedPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.installedPill {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+}
+
+.installingPill {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  min-width: 62px;
+  justify-content: center;
+}
+
+.queuedPill {
+  color: var(--muted);
+  background: var(--hover);
+}
+
+/* --- Footer / actions --------------------------------------------- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.footerHint {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.primaryBtn,
+.ghostBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.primaryBtn {
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.primaryBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.ghostBtn {
+  color: var(--muted);
+  background: transparent;
+}
+
+.ghostBtn:hover {
+  color: var(--foreground-bright);
+  background: var(--hover);
+}
+
+/* --- Step 3: Done ------------------------------------------------- */
+
+.doneHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1rem 0 2.25rem;
+}
+
+.doneBadge {
+  --focus-accent: var(--success);
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  font-size: 30px;
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--success) 10%, transparent);
+  margin-bottom: 1.25rem;
+  animation: pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.doneTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--foreground-bright);
+}
+
+.doneCopy {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin-top: 0.5rem;
+  max-width: 32rem;
+}
+
+.doneCopy strong {
+  color: var(--foreground);
+}
+
+.nextGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.875rem;
+}
+
+.nextCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition: border-color 0.18s ease, transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.nextCard:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+
+.nextIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  font-size: 18px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.nextTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--foreground-bright);
+}
+
+.nextCopy {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* --- Responsive --------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .focusGrid,
+  .nextGrid {
+    grid-template-columns: 1fr;
+  }
+  .header .brand {
+    margin-bottom: 1.5rem;
+  }
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .footerRight {
+    justify-content: space-between;
+  }
+}
