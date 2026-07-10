@@ -247,8 +247,8 @@
 }
 .surveyQ {
   color: var(--foreground-bright);
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
+  font-weight: 600;
 }
 
 .ratingRow {
@@ -263,45 +263,38 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: 999px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--foreground);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
+  line-height: 16px;
   cursor: pointer;
-  transition: all 0.14s ease;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
 .ratingBtn:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
   background: var(--hover);
 }
 .ratingEmoji {
-  padding: 5px 10px;
+  padding: 4px 9px;
 }
-.emoji {
-  font-size: 1rem;
+.icon {
+  font-size: 0.875rem;
   line-height: 1;
+  color: var(--muted);
 }
 .ratingLabel {
-  line-height: 1;
+  line-height: 16px;
 }
 
 .ratingActive {
+  background: var(--accent-light);
   border-color: color-mix(in srgb, var(--accent) 70%, transparent);
   color: var(--foreground-bright);
 }
-.tone_positive {
-  background: color-mix(in srgb, var(--success) 22%, transparent);
-  border-color: color-mix(in srgb, var(--success) 60%, transparent);
-}
-.tone_neutral {
-  background: color-mix(in srgb, var(--warning) 20%, transparent);
-  border-color: color-mix(in srgb, var(--warning) 55%, transparent);
-}
-.tone_negative {
-  background: color-mix(in srgb, var(--error) 20%, transparent);
-  border-color: color-mix(in srgb, var(--error) 55%, transparent);
+.ratingActive .icon {
+  color: var(--accent);
 }
 
 .dismiss {
@@ -328,7 +321,7 @@
 }
 .followLabel {
   color: var(--muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   margin-bottom: 8px;
 }
 .chipRow {
@@ -337,17 +330,16 @@
   gap: 6px;
 }
 .chip {
-  padding: 4px 12px;
-  border-radius: 999px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--foreground);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   cursor: pointer;
-  transition: all 0.14s ease;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
 .chip:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   background: var(--hover);
 }
 .chipActive {
@@ -365,27 +357,26 @@
   flex: 1;
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
   color: var(--foreground);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   outline: none;
 }
 .noteInput:focus {
-  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
 }
 .noteInput::placeholder {
   color: var(--muted);
 }
 .sendBtn {
-  padding: 7px 16px;
-  border-radius: var(--radius-md);
-  border: none;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
   background: var(--accent);
   color: #fff;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 16px;
   cursor: pointer;
 }
 .sendBtn:hover {

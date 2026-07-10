@@ -74,9 +74,11 @@ The 2026 theme uses **soft, spread shadows** for depth instead of hard borders. 
 
 | Token | Value | Usage |
 |---|---|---|
-| `--radius-sm` | `4px` | Tags, small elements |
-| `--radius-md` | `6px` | Cards, inputs |
+| `--radius-sm` | `4px` | Buttons, inputs, chips, tags, small elements |
+| `--radius-md` | `6px` | Cards, containers |
 | `--radius-lg` | `8px` | Dialogs, command palette, dropdowns |
+
+> **Radii are small and consistent.** VS Code's own controls (`monaco-text-button`, `monaco-inputbox`) use `4px`; toggles use `3px`. **Never use pill shapes (`border-radius: 999px` / `9999px`) on buttons, chips, or toggles** — fully-rounded pills are the #1 tell of generic AI UI and read as web-marketing, not editor-native. The only place a full radius belongs is a true numeric count badge.
 
 ## Translucency & Blur
 
@@ -95,7 +97,73 @@ Use sparingly for:
 - Popovers and floating widgets
 - Command palette style overlays
 
-## Interaction Patterns
+## Controls & Density
+
+VS Code is a **dense, compact** tool. Its controls are small, rectangular, and quiet — recipes below mirror the real `monaco-*` components. Match this or the UI reads as a generic web app.
+
+- **Base UI font is 12–13px**, not 16px. Control text is `12px` (`0.75rem`); labels/headings rarely exceed `13px` (`0.8125rem`). Reserve larger sizes for genuine page heroes, not in-editor surfaces.
+- **Tight padding.** Buttons `4px 8px`, inputs `4px 6px`. Small gaps (`4–8px`) between related controls.
+- **Everything is `4px` radius** (toggles `3px`). No pills.
+
+### Buttons
+
+There are two kinds. **Reserve the filled accent button for the single primary action per surface** — everything else is secondary. A wall of blue buttons is slop.
+
+```css
+/* Primary — one per surface (Submit, Send, Confirm) */
+.buttonPrimary {
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: #fff;              /* button.foreground */
+  font-size: 0.75rem;
+  line-height: 16px;
+  cursor: pointer;
+}
+.buttonPrimary:hover { background: var(--accent-hover); }
+
+/* Secondary — the default for most actions, incl. choice/toggle buttons */
+.button {
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card);   /* subtle gray, NOT accent */
+  color: var(--foreground);
+  font-size: 0.75rem;
+  line-height: 16px;
+  cursor: pointer;
+}
+.button:hover { background: var(--hover); }
+```
+
+### Selection & toggle states (chips, choices, filters)
+
+Selected state uses **one subtle accent tint + accent border** — mirroring VS Code's `inputOption.activeBackground` / `activeBorder`. **Do not tint selections by sentiment** (green/amber/red fills). Meaning comes from the label, not a saturated background.
+
+```css
+.chip {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);   /* 4px — never 999px */
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.chip:hover { background: var(--hover); }
+
+.chipSelected {
+  background: var(--accent-light);                              /* ~15% accent */
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  color: var(--foreground-bright);
+}
+```
+
+- Status colors (`--error`, `--success`, `--warning`) are for **status/diagnostic text and icons** (an error message, a git-added line), **not** as fills behind interactive controls.
+- No emoji as UI affordances — use Codicons (e.g. `thumbsup`, `check`, `error`).
+
+
 
 ### Hover States
 
@@ -255,20 +323,41 @@ background: color-mix(in srgb, var(--accent) 10%, transparent); /* 10% accent */
 border-color: color-mix(in srgb, var(--accent) 30%, transparent); /* 30% accent */
 ```
 
+## Avoiding AI Design Slop
+
+These are the recurring tells that make a prototype look "AI-vibed" instead of VS Code–native. Audit against them before calling any UI done:
+
+| ❌ Slop tell | ✅ VS Code-native |
+|---|---|
+| Pill buttons/chips (`border-radius: 999px`) | `4px` radius rectangles |
+| Sentiment-tinted fills (green/amber/red button backgrounds) | Neutral controls; one subtle accent tint for the *selected* state only |
+| A row of filled accent buttons | One filled primary; the rest secondary (gray) |
+| Large 15–16px control text, roomy padding | 12–13px text, tight `4px 8px` padding, dense layout |
+| Emoji as buttons/affordances (👍 😐 👎) | Codicons |
+| Glowing focus halos, big soft drop shadows on everything | 1px accent focus border; stealth shadows only on floating layers |
+| Gradient fills, decorative color | Restrained palette; accent reserved for interaction |
+| Bright white body text everywhere | `--foreground` (`#bfbfbf`); reserve `--foreground-bright` for emphasis |
+
+When in doubt, look at how the equivalent real VS Code surface (a Quick Pick, the Source Control input, a notification toast) is styled and match its restraint.
+
 ## Do / Don't
 
 ### Do
 - Use CSS custom properties (`var(--accent)`) in CSS Modules
 - Use `color-mix(in srgb, ...)` for opacity variants
-- Prefer shadows for depth over visible borders
+- Keep controls compact: `4px` radius, `12–13px` text, tight padding — match VS Code's density
+- Reserve the filled accent button for one primary action per surface; make the rest secondary
+- Express a selected/toggle state with a single subtle accent tint + accent border
+- Prefer shadows for depth over visible borders, but only on floating layers (popovers, dialogs)
 - Keep contrast accessible — muted text (`#8C8C8C`) on dark backgrounds meets 4.5:1
-- Use translucent chrome sparingly for navigation, not for content areas
 - Co-locate `.module.css` files next to their component/page
 
 ### Don't
+- Use pill shapes (`border-radius: 999px`) on buttons, chips, or toggles
+- Tint interactive controls by sentiment (green/amber/red fills) — status colors are for status text/icons only
+- Use emoji as UI affordances — use Codicons
 - Use Tailwind utility classes — this project uses CSS Modules
 - Use warm/stone color palettes (`stone-*`, amber, `#d97706`)
-- Use decorative or serif fonts
-- Add hard drop shadows — use the soft spread shadow system
+- Use decorative or serif fonts, gradients, or glowing focus halos
 - Over-use color — the palette is restrained, with accent reserved for interactive elements
 - Create global CSS classes — always use CSS Modules for scoping

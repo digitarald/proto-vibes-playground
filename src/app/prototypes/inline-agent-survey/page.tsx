@@ -17,7 +17,7 @@ interface RatingOption {
   value: string;
   label: string;
   tone: Tone;
-  emoji?: string;
+  icon?: string;
 }
 
 type Style = "outcome" | "sentiment" | "descriptive" | "scale";
@@ -51,9 +51,9 @@ const VARIANTS: Variant[] = [
     question: "How did this session go?",
     style: "sentiment",
     options: [
-      { value: "good", label: "Good", tone: "positive", emoji: "👍" },
-      { value: "fine", label: "Fine", tone: "neutral", emoji: "😐" },
-      { value: "bad", label: "Bad", tone: "negative", emoji: "👎" },
+      { value: "good", label: "Good", tone: "positive", icon: "thumbsup" },
+      { value: "fine", label: "Fine", tone: "neutral", icon: "dash" },
+      { value: "bad", label: "Bad", tone: "negative", icon: "thumbsdown" },
     ],
   },
   {
@@ -301,14 +301,12 @@ function InlineSurvey({ variant }: { variant: Variant }) {
                 key={opt.value}
                 className={`${styles.ratingBtn} ${
                   variant.style === "sentiment" ? styles.ratingEmoji : ""
-                } ${active ? styles.ratingActive : ""} ${
-                  active ? styles[`tone_${opt.tone}`] : ""
-                }`}
+                } ${active ? styles.ratingActive : ""}`}
                 onClick={() => pickRating(opt)}
                 title={opt.label}
               >
-                {opt.emoji && (
-                  <span className={styles.emoji}>{opt.emoji}</span>
+                {opt.icon && (
+                  <Codicon name={opt.icon} className={styles.icon} />
                 )}
                 <span className={styles.ratingLabel}>{opt.label}</span>
               </button>

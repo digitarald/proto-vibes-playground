@@ -30,21 +30,21 @@ The surface is a VS Code agent session window: title bar + command center, sessi
 | Thanks | Green-tinted confirmation with changelog link (close-the-loop) |
 | Dismissed | Quiet one-liner with Undo |
 
-**Tone coloring** is the key affordance: the same three-option control communicates positive/neutral/negative via color so the meaning is legible pre-read.
+**Selected-state affordance:** the chosen option gets a single subtle accent tint + accent border (VS Code's `inputOption.active*` model) — meaning comes from the label, not the color.
 
 ## Variations (switcher)
 
 All four share the progressive follow-up; they differ only in the primary rating format — mapped to the issue's section A/B options.
 
 1. **3-point outcome (proposed)** — "Did this do what you wanted?" · Yes / Partly / No. Outcome-framed, measures task success.
-2. **Two-tap sentiment** — "How did this session go?" · 👍 / 😐 / 👎. Satisfaction-framed, closest to Claude Code.
+2. **Two-tap sentiment** — "How did this session go?" · Good / Fine / Bad with Codicons (thumbsup / dash / thumbsdown). Satisfaction-framed, closest to Claude Code.
 3. **Descriptive chips** — "How close did this land?" · Nailed it / Mostly there / Off track. Qualitative labels make a low rating already partly diagnostic.
 4. **5-point outcome** — Exactly / Mostly / Partly / Barely / Not at all. More granularity, slightly higher friction.
 
 ## Validated Patterns
 
 1. **One-tap happy path** — a positive rating auto-submits; only non-positive ratings open the follow-up. ✅ Keeps the common case frictionless while the negative path becomes the diagnostic on-ramp.
-2. **Tone-tinted selection** — ✅ green/amber/red on the selected pill lets the control carry meaning without extra labels. Works across all four formats.
+2. **Compact, VS Code-native controls** — ✅ 4px-radius secondary buttons at 12px, quiet accent highlight for the selected state. ❌ First pass used 999px pills with saturated green/amber/red sentiment tints and emoji — read as generic AI/marketing UI, not editor-native. Lesson: match VS Code's density and restraint (small radius, one accent for selection, status colors reserved for status text — not control fills, Codicons over emoji).
 3. **Inline, not modal** — ✅ accent left-border + flush placement in the thread reads as native agent output. Avoids the "survey capturing a keystroke meant for the prompt" input-ambiguity failure mode by keeping it out of the composer.
 4. **First-class dismiss** — ✅ a persistent × plus a quiet "skipped / Undo" state keeps opt-out symmetric with participation (a failure mode called out in the issue's prior-art notes).
 
