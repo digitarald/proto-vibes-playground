@@ -1,0 +1,7 @@
+{
+  "title": "Auto Approval",
+  "description": "A VS Code chat input prototype for choosing between default, risk-based automatic, and bypass approval modes.",
+  "author": "Harald Kirschner",
+  "tags": ["chat", "approvals", "agent", "permissions"],
+  "createdAt": "2026-07-13"
+}
