@@ -1,0 +1,7 @@
+{
+  "title": "Sandbox Section: Configuration First",
+  "description": "A single-page Sandbox section for Agent Customizations that puts editable controls first and the computed effective policy below.",
+  "author": "Harald Kirschner",
+  "tags": ["sandbox", "permissions", "customization", "policy"],
+  "createdAt": "2026-09-01"
+}

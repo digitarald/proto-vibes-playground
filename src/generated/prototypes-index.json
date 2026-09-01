@@ -1,5 +1,39 @@
 [
   {
+    "slug": "sandbox-section",
+    "title": "Sandbox Section: Configuration First",
+    "description": "A single-page Sandbox section for Agent Customizations that puts editable controls first and the computed effective policy below.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "sandbox",
+      "permissions",
+      "customization",
+      "policy"
+    ],
+    "createdAt": "2026-09-01",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
+    "slug": "sandbox-section-v2-policy-inspector",
+    "title": "Sandbox Section: Outcome First",
+    "description": "A single-column Sandbox editor that summarizes the effective policy before its settings.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "sandbox",
+      "permissions",
+      "customization",
+      "effective-policy"
+    ],
+    "createdAt": "2026-09-01",
+    "hasDesign": true,
+    "variant": {
+      "parentSlug": "sandbox-section",
+      "version": 2,
+      "descriptor": "policy-inspector"
+    }
+  },
+  {
     "slug": "inline-agent-survey",
     "title": "Inline Agent Quality Survey",
     "description": "Lightweight, in-situ quality survey that surfaces at agent session boundaries — with a floating switcher to compare rating-format variations (outcome 3-point, sentiment, descriptive chips, 5-point scale) directly in context.",
