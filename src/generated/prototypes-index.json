@@ -1,5 +1,20 @@
 [
   {
+    "slug": "agent-factories-agents-window",
+    "title": "Agent Factories in the Agents Window",
+    "description": "Three integrated interaction models for durable, observable, resumable Agent Factory runs in VS Code's Agents window.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "agents",
+      "factories",
+      "orchestration",
+      "loops"
+    ],
+    "createdAt": "2026-09-10",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
     "slug": "sandbox-section",
     "title": "Sandbox Section: Configuration First",
     "description": "A single-page Sandbox section for Agent Customizations that puts editable controls first and the computed effective policy below.",
@@ -32,6 +47,21 @@
       "version": 2,
       "descriptor": "policy-inspector"
     }
+  },
+  {
+    "slug": "auto-approval",
+    "title": "Auto Approval",
+    "description": "A VS Code chat input prototype for choosing between default, risk-based automatic, and bypass approval modes.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "chat",
+      "approvals",
+      "agent",
+      "permissions"
+    ],
+    "createdAt": "2026-07-13",
+    "hasDesign": true,
+    "variant": null
   },
   {
     "slug": "inline-agent-survey",

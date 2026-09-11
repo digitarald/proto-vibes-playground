@@ -1,0 +1,7 @@
+{
+  "title": "Agent Factories in the Agents Window",
+  "description": "Three integrated interaction models for durable, observable, resumable Agent Factory runs in VS Code's Agents window.",
+  "author": "Harald Kirschner",
+  "tags": ["agents", "factories", "orchestration", "loops"],
+  "createdAt": "2026-09-10"
+}
