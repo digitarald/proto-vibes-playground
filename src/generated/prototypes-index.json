@@ -1,5 +1,24 @@
 [
   {
+    "slug": "agent-factories-agents-window-v3-mvp-lifecycle",
+    "title": "Agent Factory MVP Lifecycle",
+    "description": "A compact end-to-end workflow for authoring, testing, publishing, and using one Agent Factory in daily VS Code work.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "agents",
+      "factories",
+      "authoring",
+      "mvp"
+    ],
+    "createdAt": "2026-09-14",
+    "hasDesign": true,
+    "variant": {
+      "parentSlug": "agent-factories-agents-window",
+      "version": 3,
+      "descriptor": "mvp-lifecycle"
+    }
+  },
+  {
     "slug": "agent-factories-agents-window-v2-authoring",
     "title": "Agent Factory Authoring",
     "description": "Three source-backed approaches for creating, testing, improving, and maintaining Agent Factories in VS Code.",
