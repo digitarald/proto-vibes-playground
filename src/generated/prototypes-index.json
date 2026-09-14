@@ -1,5 +1,24 @@
 [
   {
+    "slug": "agent-factories-agents-window-v2-authoring",
+    "title": "Agent Factory Authoring",
+    "description": "Three source-backed approaches for creating, testing, improving, and maintaining Agent Factories in VS Code.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "agents",
+      "factories",
+      "authoring",
+      "evals"
+    ],
+    "createdAt": "2026-09-11",
+    "hasDesign": true,
+    "variant": {
+      "parentSlug": "agent-factories-agents-window",
+      "version": 2,
+      "descriptor": "authoring"
+    }
+  },
+  {
     "slug": "agent-factories-agents-window",
     "title": "Agent Factories in the Agents Window",
     "description": "Three integrated interaction models for durable, observable, resumable Agent Factory runs in VS Code's Agents window.",

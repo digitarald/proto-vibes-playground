@@ -1,0 +1,7 @@
+{
+  "title": "Agent Factory Authoring",
+  "description": "Three source-backed approaches for creating, testing, improving, and maintaining Agent Factories in VS Code.",
+  "author": "Harald Kirschner",
+  "tags": ["agents", "factories", "authoring", "evals"],
+  "createdAt": "2026-09-11"
+}
