@@ -249,6 +249,10 @@
   font-size: 0.8125rem;
   font-weight: 600;
 }
+.optional {
+  color: var(--muted);
+  font-weight: 400;
+}
 
 .ratingRow {
   display: flex;

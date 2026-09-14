@@ -27,6 +27,7 @@ interface Variant {
   switchLabel: string;
   blurb: string;
   question: string;
+  optional?: boolean;
   style: Style;
   options: RatingOption[];
 }
@@ -46,14 +47,15 @@ const VARIANTS: Variant[] = [
   },
   {
     id: "sentiment",
-    switchLabel: "Two-tap sentiment",
-    blurb: "Satisfaction-framed · closest to Claude",
-    question: "How did this session go?",
+    switchLabel: "Session sentiment",
+    blurb: "Optional · lightweight session pulse",
+    question: "How is Copilot doing this session?",
+    optional: true,
     style: "sentiment",
     options: [
-      { value: "good", label: "Good", tone: "positive", icon: "thumbsup" },
-      { value: "fine", label: "Fine", tone: "neutral", icon: "dash" },
       { value: "bad", label: "Bad", tone: "negative", icon: "thumbsdown" },
+      { value: "fine", label: "Fine", tone: "neutral", icon: "dash" },
+      { value: "good", label: "Good", tone: "positive", icon: "thumbsup" },
     ],
   },
   {
@@ -210,7 +212,7 @@ function Transcript() {
         <span className={styles.copyBtn}>
           <Codicon name="copy" />
         </span>
-        <span className={styles.credits}>Claude Opus 4.8 · 32.9 credits</span>
+        <span className={styles.credits}>Agent · 32.9 credits</span>
       </div>
     </>
   );
@@ -287,7 +289,12 @@ function InlineSurvey({ variant }: { variant: Variant }) {
   return (
     <div className={styles.survey}>
       <div className={styles.surveyPrimary}>
-        <span className={styles.surveyQ}>{variant.question}</span>
+        <span className={styles.surveyQ}>
+          {variant.question}
+          {variant.optional && (
+            <span className={styles.optional}> (optional)</span>
+          )}
+        </span>
 
         <div
           className={`${styles.ratingRow} ${
@@ -318,6 +325,7 @@ function InlineSurvey({ variant }: { variant: Variant }) {
           className={styles.dismiss}
           onClick={() => setDismissed(true)}
           title="Not now"
+          aria-label="Dismiss survey"
         >
           <Codicon name="close" />
         </button>
@@ -376,7 +384,7 @@ function Composer() {
             <Codicon name="copilot" /> Agent
           </span>
           <span className={styles.composerMeta}>
-            <Codicon name="sparkle" /> Claude Opus 4.8
+            <Codicon name="sparkle" /> Agent
           </span>
           <span className={styles.composerMeta}>Medium 200K</span>
           <span className={styles.composerEnter}>
@@ -405,7 +413,7 @@ function Composer() {
    ──────────────────────────────────────────────────────────── */
 
 export default function InlineAgentSurveyPage() {
-  const [variantIdx, setVariantIdx] = useState(0);
+  const [variantIdx, setVariantIdx] = useState(1);
   const variant = VARIANTS[variantIdx];
 
   return (

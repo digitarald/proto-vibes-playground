@@ -1,6 +1,6 @@
 # Inline Agent Quality Survey — Design Doc
 
-> **Status:** Early prototype · **Last updated:** 2026-07-10
+> **Status:** Early prototype · **Last updated:** 2026-08-04
 
 Explores [microsoft/vscode-internalbacklog#8378](https://github.com/microsoft/vscode-internalbacklog/issues/8378).
 
@@ -24,8 +24,8 @@ The surface is a VS Code agent session window: title bar + command center, sessi
 
 | Zone | Treatment |
 |---|---|
-| Primary question | One row: question + rating control + first-class dismiss (×) |
-| Rating control | Pill buttons; selected pill tints by **tone** (green/amber/red) |
+| Primary question | One row: bold question + quiet `(optional)` label |
+| Rating control | Compact rectangular buttons; selected state uses a quiet accent tint |
 | Follow-up (revealed) | Reason chips (multi-select) + optional one-line note + Send |
 | Thanks | Green-tinted confirmation with changelog link (close-the-loop) |
 | Dismissed | Quiet one-liner with Undo |
@@ -37,7 +37,7 @@ The surface is a VS Code agent session window: title bar + command center, sessi
 All four share the progressive follow-up; they differ only in the primary rating format — mapped to the issue's section A/B options.
 
 1. **3-point outcome (proposed)** — "Did this do what you wanted?" · Yes / Partly / No. Outcome-framed, measures task success.
-2. **Two-tap sentiment** — "How did this session go?" · Good / Fine / Bad with Codicons (thumbsup / dash / thumbsdown). Satisfaction-framed, closest to Claude Code.
+2. **Session sentiment** — "How is Copilot doing this session? (optional)" · Bad / Fine / Good. Satisfaction-framed with a separate close action for opting out.
 3. **Descriptive chips** — "How close did this land?" · Nailed it / Mostly there / Off track. Qualitative labels make a low rating already partly diagnostic.
 4. **5-point outcome** — Exactly / Mostly / Partly / Barely / Not at all. More granularity, slightly higher friction.
 
@@ -46,7 +46,8 @@ All four share the progressive follow-up; they differ only in the primary rating
 1. **One-tap happy path** — a positive rating auto-submits; only non-positive ratings open the follow-up. ✅ Keeps the common case frictionless while the negative path becomes the diagnostic on-ramp.
 2. **Compact, VS Code-native controls** — ✅ 4px-radius secondary buttons at 12px, quiet accent highlight for the selected state. ❌ First pass used 999px pills with saturated green/amber/red sentiment tints and emoji — read as generic AI/marketing UI, not editor-native. Lesson: match VS Code's density and restraint (small radius, one accent for selection, status colors reserved for status text — not control fills, Codicons over emoji).
 3. **Inline, not modal** — ✅ a uniform 1px-bordered block placed flush in the thread reads as native agent output. ❌ An accent left-border (2px) fought the corner radius and left an ugly mitered seam — mixed-width borders + `border-radius` don't mix. Avoids the "survey capturing a keystroke meant for the prompt" input-ambiguity failure mode by keeping it out of the composer.
-4. **First-class dismiss** — ✅ a persistent × plus a quiet "skipped / Undo" state keeps opt-out symmetric with participation (a failure mode called out in the issue's prior-art notes).
+4. **First-class dismiss** — ✅ a persistent × leads to a quiet "skipped / Undo" state, keeping opt-out symmetric with participation without adding a redundant answer choice.
+5. **Optional by construction** — ✅ placing `(optional)` in the question makes participation expectations clear before interaction, without borrowing terminal-specific numbering or input chrome.
 
 ## Scenario / Demo Flow
 
