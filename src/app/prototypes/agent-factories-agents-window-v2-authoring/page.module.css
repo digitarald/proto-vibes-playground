@@ -630,8 +630,8 @@
 }
 
 .codeAction,
-.inlineDiffCompact,
-.appliedBanner {
+.codeWorkspace > .inlineDiffCompact,
+.codeWorkspace > .appliedBanner {
   position: absolute;
   right: 14px;
   bottom: 12px;
@@ -1096,7 +1096,7 @@
   background: #151617;
 }
 
-.inlineDiffCompact {
+.codeWorkspace > .inlineDiffCompact {
   margin: 0;
 }
 
@@ -1654,7 +1654,11 @@
   }
 
   .evidence {
-    width: 250px;
+    display: none;
+  }
+
+  .editorArea {
+    min-width: 0;
   }
 
   .variantSwitch button {

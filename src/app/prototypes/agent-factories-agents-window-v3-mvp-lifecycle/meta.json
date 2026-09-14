@@ -1,0 +1,7 @@
+{
+  "title": "Agent Factory MVP Lifecycle",
+  "description": "A compact end-to-end workflow for authoring, testing, publishing, and using one Agent Factory in daily VS Code work.",
+  "author": "Harald Kirschner",
+  "tags": ["agents", "factories", "authoring", "mvp"],
+  "createdAt": "2026-09-14"
+}
