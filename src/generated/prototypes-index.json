@@ -14,6 +14,24 @@
     "variant": null
   },
   {
+    "slug": "contextual-connector-recommendations-v2-getting-started",
+    "title": "Copilot Getting Started Checklist",
+    "description": "A compact checklist beneath the chat input for workspace context, connectors, planning, browser previews, and automations.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "chat",
+      "onboarding",
+      "connectors"
+    ],
+    "createdAt": "2026-10-13",
+    "hasDesign": true,
+    "variant": {
+      "parentSlug": "contextual-connector-recommendations",
+      "version": 2,
+      "descriptor": "getting-started"
+    }
+  },
+  {
     "slug": "agent-factories-agents-window-v3-mvp-lifecycle",
     "title": "Agent Factory MVP Lifecycle",
     "description": "A compact end-to-end workflow for authoring, testing, publishing, and using one Agent Factory in daily VS Code work.",
