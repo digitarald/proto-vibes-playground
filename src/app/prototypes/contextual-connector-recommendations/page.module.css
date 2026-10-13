@@ -1,0 +1,170 @@
+.app {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 13px;
+  line-height: 1.5;
+  color-scheme: dark;
+}
+
+.app button, .app textarea, .app a { font: inherit; }
+.app button { cursor: pointer; }
+.app button:disabled { cursor: default; opacity: .45; }
+.app button:focus-visible, .app a:focus-visible, .details:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
+}
+.app ::selection { background: var(--accent-light); color: var(--foreground-bright); }
+.app ::-webkit-scrollbar { width: 8px; }
+.app ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.titlebar { height: 44px; display: flex; align-items: center; gap: 24px; padding: 0 16px; flex-shrink: 0; }
+.windowControls { display: flex; gap: 8px; }
+.windowControls i { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; }
+.windowControls i:nth-child(2) { background: #febc2e; }
+.windowControls i:nth-child(3) { background: #28c840; }
+.iconButton, .dismiss { display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--muted); width: 26px; height: 26px; border-radius: 4px; flex-shrink: 0; }
+.iconButton:hover, .dismiss:hover { background: var(--hover); color: var(--foreground-bright); }
+.titleCenter { position: absolute; left: 34%; width: 37%; display: flex; gap: 14px; align-items: center; color: var(--muted); }
+.projectTitle { height: 26px; display: flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 6px; padding: 0 8px; flex: 1; font-size: 12px; }
+.titleEnd { margin-left: auto; display: flex; gap: 16px; color: var(--muted); }
+.workbench { flex: 1; min-height: 0; display: flex; padding: 0 8px 8px 0; gap: 6px; }
+.sidebar { width: 310px; padding: 0 12px; flex-shrink: 0; overflow: auto; scrollbar-width: thin; }
+.newSession { display: flex; align-items: center; gap: 9px; width: 100%; border: 0; background: transparent; color: var(--foreground); font-weight: 600 !important; height: 34px; text-align: left; padding: 0 2px; }
+.newSession:hover, button.session:hover { background: var(--hover); border-radius: 4px; }
+.newSession kbd { margin-left: auto; padding: 0 5px; background: var(--hover); border-radius: 4px; font-size: 11px; font-weight: 400; }
+.navItem, .group { display: flex; align-items: center; gap: 9px; min-height: 30px; color: var(--muted); padding: 0 2px; }
+.sectionHeading { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 600; margin: 18px 0 8px; }
+.sectionHeading span:first-child { margin-left: auto; }
+.session { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 10px; border: 0; background: transparent; color: var(--foreground); width: 100%; text-align: left; }
+.dot { display: inline-block; width: 4px; height: 4px; background: var(--border); border-radius: 50%; flex-shrink: 0; }
+.activeDot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+.workstream { padding: 8px 0 9px 10px; }
+.workstream > div { display: flex; align-items: center; gap: 10px; }
+.workstream p { display: flex; align-items: center; gap: 3px; padding-left: 14px; font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; }
+.workstream p :global(.codicon) { font-size: 12px; }
+.added { color: var(--success); }
+.removed { color: var(--error); }
+.more { margin: 10px 0 14px; text-align: center; color: var(--muted); font-size: 11px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.chat { flex: 1; position: relative; min-width: 0; overflow: auto; background: var(--chrome); border: 1px solid var(--border); border-radius: 8px; scrollbar-width: thin; }
+.chatIcon { position: absolute; top: 12px; left: 12px; color: var(--muted); opacity: .6; }
+.content { width: min(850px, calc(100% - 80px)); margin: clamp(100px, 26vh, 240px) auto 100px; }
+.content h1 { font-size: clamp(21px, 2.2vw, 28px); text-align: center; font-weight: 600; letter-spacing: -.025em; margin-bottom: 65px; color: var(--foreground); }
+.contextBar { display: flex; align-items: center; flex-wrap: wrap; gap: 18px; padding: 0 12px; color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+.contextBar > span { display: inline-flex; align-items: center; gap: 6px; }
+.contextBar :global(.codicon) { font-size: 13px; }
+.contextFigma { color: var(--foreground); }
+.composer { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 11px 12px 9px; }
+.composer:focus-within { border-color: color-mix(in srgb, var(--accent) 65%, var(--border)); }
+.composer textarea { display: block; width: 100%; min-height: 43px; max-height: 150px; resize: none; background: transparent; color: var(--foreground-bright); caret-color: var(--accent); border: 0; outline: none; line-height: 1.6; }
+.composer textarea::placeholder { color: var(--muted); }
+.composerFooter { display: flex; align-items: center; gap: 9px; margin-top: 7px; color: var(--muted); font-size: 12px; }
+.composerLeft { display: flex; gap: 7px; align-items: center; }
+.composerLeft > :global(.codicon):first-child { margin-right: 5px; }
+.separator { width: 1px; height: 14px; background: var(--border); flex-shrink: 0; }
+.allow { color: var(--link); }
+.model { display: flex; align-items: center; gap: 6px; margin-left: auto; font-size: 11px; }
+.model :global(.codicon) { font-size: 13px; }
+.send { display: inline-flex; justify-content: center; align-items: center; width: 25px; height: 25px; border: 0; border-radius: 4px; background: var(--accent); color: white; flex-shrink: 0; }
+.send:hover:not(:disabled) { background: var(--accent-hover); }
+.recommendationSlot { min-height: 110px; padding-top: 12px; }
+.inlineRecommendation, .cardRecommendation { display: flex; align-items: center; gap: 12px; position: relative; }
+.inlineRecommendation { padding: 3px 7px 3px 12px; }
+.figma { flex-shrink: 0; width: 12px; height: 18px; }
+.figmaLarge { width: 22px; height: 33px; flex-shrink: 0; }
+.recommendationCopy { flex: 1; min-width: 0; }
+.recommendationCopy p { font-size: 12px; }
+.inlineRecommendation .recommendationCopy p { color: var(--foreground); }
+.inlineRecommendation .recommendationCopy p span { color: var(--muted); }
+.installLink { display: inline-flex; align-items: center; gap: 3px; border: 0; background: transparent; color: var(--link); padding: 4px 2px; font-size: 12px !important; white-space: nowrap; border-radius: 4px; }
+.installLink:hover { color: var(--foreground-bright); background: var(--hover); }
+.installLink :global(.codicon) { font-size: 12px; }
+.dismiss { width: 22px; height: 24px; }
+.dismiss :global(.codicon) { font-size: 13px; }
+.cardRecommendation { border: 1px solid var(--border); border-radius: 6px; padding: 13px 9px 13px 15px; background: color-mix(in srgb, var(--card) 45%, var(--chrome)); gap: 14px; }
+.cardRecommendation .figma { width: 18px; height: 27px; }
+.cardRecommendation h2 { font-size: 13px; font-weight: 500; color: var(--foreground-bright); margin-bottom: 3px; }
+.cardRecommendation p { color: var(--muted); line-height: 1.6; max-width: 50ch; }
+.cardRecommendation .installLink { padding: 4px 9px; background: var(--card); border: 1px solid var(--border); color: var(--foreground); }
+.cardRecommendation .installLink:hover { background: var(--hover); color: var(--foreground-bright); }
+.details { margin-top: 10px; padding: 18px; border: 1px solid var(--border); background: var(--card); border-radius: 6px; animation: reveal 180ms cubic-bezier(.16,1,.3,1); }
+.detailsHeading { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.detailsHeading h2 { font-size: 14px; font-weight: 600; color: var(--foreground-bright); }
+.detailsHeading p { font-size: 12px; color: var(--muted); }
+.detailsHeading > button { margin-left: auto; align-self: flex-start; }
+.details > p { font-size: 12px; margin-bottom: 12px; max-width: 65ch; }
+.capability { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 7px 0; }
+.capability :global(.codicon) { color: var(--muted); font-size: 14px; }
+.detailsFooter { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--border); margin-top: 16px; padding-top: 12px; }
+.detailsFooter > span { font-size: 11px; color: var(--muted); }
+.installButton { background: var(--accent); color: white; border: 1px solid transparent; border-radius: 4px; padding: 4px 12px; font-size: 12px !important; white-space: nowrap; }
+.installButton:hover { background: var(--accent-hover); }
+.installStatus { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12px; padding: 6px 12px; }
+.installStatus:empty { display: none; }
+.installStatus > span:not(:global(.codicon)) { color: var(--muted); }
+.success { color: var(--success); }
+.conversation { margin-top: 70px; }
+.messages { margin-bottom: 40px; padding: 0 12px; }
+.messageLabel { display: flex; align-items: center; gap: 7px; font-weight: 600; margin-bottom: 10px; }
+.messages p { line-height: 1.8; max-width: 70ch; }
+.userMessage { margin-bottom: 30px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.demoNote { display: block; margin-top: 12px; color: var(--muted); font-size: 11px; }
+.variantToolbar { display: flex; align-items: center; gap: 4px; position: fixed; bottom: 20px; right: 24px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 5px; font-size: 11px; }
+.variantToolbar a { display: flex; padding: 5px; color: var(--muted); border-radius: 4px; text-decoration: none; }
+.variantToolbar a:hover { color: var(--foreground); background: var(--hover); }
+.toolbarLabel { color: var(--muted); padding: 0 7px 0 3px; }
+.variantToolbar button { background: transparent; color: var(--muted); border: 1px solid transparent; padding: 3px 8px; border-radius: 4px; font-size: 11px !important; }
+.variantToolbar button:hover { color: var(--foreground); background: var(--hover); }
+.variantToolbar button[aria-pressed="true"] { color: var(--foreground-bright); background: var(--accent-light); border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+.resetButton { display: flex; align-items: center; gap: 5px; }
+.resetButton :global(.codicon) { font-size: 13px; }
+@keyframes reveal { from { clip-path: inset(0 0 15% 0); opacity: .7; } to { clip-path: inset(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .details { animation: none; } }
+@media (min-width: 701px) { .sidebarOpen { display: none; } }
+@media (min-width: 1500px) { .content { margin-top: 28vh; } }
+@media (max-width: 1050px) {
+  .sidebar { width: 235px; }
+  .workstream p { font-size: 10px; }
+  .content { width: calc(100% - 48px); }
+  .inlineRecommendation { flex-wrap: wrap; gap: 8px; }
+  .inlineRecommendation .recommendationCopy { flex-basis: calc(100% - 44px); }
+  .inlineRecommendation .installLink { margin-left: 20px; }
+  .inlineRecommendation .dismiss { position: absolute; right: 7px; top: 3px; }
+  .cardRecommendation { flex-wrap: wrap; }
+  .cardRecommendation .recommendationCopy { flex-basis: calc(100% - 55px); padding-right: 12px; }
+  .cardRecommendation .installLink { margin-left: 32px; }
+  .cardRecommendation .dismiss { position: absolute; right: 7px; top: 9px; }
+  .contextBar { gap: 12px; }
+  .model { font-size: 10px; }
+}
+@media (max-width: 700px) {
+  .windowControls { display: none; }
+  .titlebar { padding: 0 12px; }
+  .titleCenter { left: 65px; width: calc(100% - 135px); }
+  .titleCenter > :global(.codicon) { display: none; }
+  .titleEnd > :global(.codicon):first-child { display: none; }
+  .sidebar { display: none; }
+  .sidebarOpen { display: block; position: absolute; top: 44px; bottom: 0; z-index: 2; background: var(--background); border-right: 1px solid var(--border); width: 270px; padding-top: 8px; }
+  .workbench { padding: 0 6px 6px; }
+  .content { width: calc(100% - 32px); margin-top: 22vh; }
+  .content h1 { font-size: 23px; margin-bottom: 38px; text-wrap: balance; }
+  .contextBar { gap: 10px; padding-inline: 3px; }
+  .contextBar > span:nth-child(2), .contextBar > span:nth-child(4) { display: none; }
+  .composer { padding-inline: 9px; }
+  .composerFooter { flex-wrap: wrap; row-gap: 10px; }
+  .composerLeft { flex: 1; }
+  .model { order: 3; width: 100%; margin: 0; }
+  .inlineRecommendation { padding-left: 4px; }
+  .recommendationCopy p { line-height: 1.7; }
+  .inlineRecommendation .recommendationCopy p span { display: block; }
+  .inlineRecommendation .installLink { margin-left: 20px; }
+  .details { padding: 14px; }
+  .detailsFooter { align-items: flex-start; flex-direction: column; }
+  .variantToolbar { position: static; align-self: flex-end; flex-shrink: 0; margin: 6px 12px 12px; }
+  .toolbarLabel { display: none; }
+  .conversation { margin-top: 50px; }
+}

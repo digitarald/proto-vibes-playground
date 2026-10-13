@@ -1,5 +1,19 @@
 [
   {
+    "slug": "contextual-connector-recommendations",
+    "title": "Contextual Connector Recommendations",
+    "description": "Compare quiet inline and benefit-led Figma connector recommendations beneath the chat composer.",
+    "author": "Harald Kirschner",
+    "tags": [
+      "chat",
+      "connectors",
+      "recommendations"
+    ],
+    "createdAt": "2026-10-13",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
     "slug": "agent-factories-agents-window-v3-mvp-lifecycle",
     "title": "Agent Factory MVP Lifecycle",
     "description": "A compact end-to-end workflow for authoring, testing, publishing, and using one Agent Factory in daily VS Code work.",
