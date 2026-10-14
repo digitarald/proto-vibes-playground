@@ -1,49 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { useRef, useState } from "react";
 import { Codicon } from "../../components/codicon";
+import workiqIcon from "./workiq.png";
+import notionIcon from "./notion.svg";
 import styles from "./page.module.css";
 
-type SetupId = "init" | "figma" | "workiq" | "notion";
-type StepId = SetupId | "plan" | "browser" | "automation";
+type StepId = "init" | "plan" | "figma" | "workiq" | "notion" | "automation";
+
+const INIT_COMMAND = /^\s*\/init(?:\s|$)/;
 
 const STEPS: { id: StepId; label: string; action: string; icon: string; source?: string }[] = [
-  { id: "init", label: "Teach Copilot this workspace", action: "Run /init", icon: "file-code" },
-  { id: "figma", label: "Build from a Figma design", action: "Connect", icon: "symbol-color" },
-  { id: "workiq", label: "Catch up on email", action: "Connect", icon: "mail", source: "WorkIQ" },
-  { id: "notion", label: "Work from a Notion plan", action: "Connect", icon: "notebook" },
-  { id: "plan", label: "Plan before bigger changes", action: "Try Plan", icon: "checklist" },
-  { id: "browser", label: "Check your app in the browser", action: "Open", icon: "browser" },
-  { id: "automation", label: "Set up a daily check-in", action: "Set up", icon: "history" },
+  { id: "init", label: "Document this workspace", action: "Run /init", icon: "file-code", source: "AGENTS.md" },
+  { id: "plan", label: "Plan a bigger change", action: "Use Plan", icon: "checklist" },
+  { id: "figma", label: "Implement this Figma frame", action: "Connectors", icon: "symbol-color" },
+  { id: "workiq", label: "Triage my Outlook inbox", action: "Connectors", icon: "mail" },
+  { id: "notion", label: "Turn my Notion plan into tasks", action: "Connectors", icon: "notebook" },
+  { id: "automation", label: "Set up a daily check-in", action: "Automations", icon: "history" },
 ];
-
-const SETUP: Record<SetupId, { title: string; description: string; action: string; done: string }> = {
-  init: {
-    title: "Initialize this workspace",
-    description: "Save this repo's build commands and conventions as workspace instructions.",
-    action: "Run /init",
-    done: "Workspace initialized in this demo. No files were written.",
-  },
-  figma: {
-    title: "Connect Figma",
-    description: "Share a frame link so Copilot can work from the design.",
-    action: "Connect Figma",
-    done: "Figma connected in this demo. Your draft is unchanged.",
-  },
-  workiq: {
-    title: "Connect WorkIQ",
-    description: "Ask Copilot to find an email or summarize a thread.",
-    action: "Connect WorkIQ",
-    done: "WorkIQ connected in this demo. No email was accessed.",
-  },
-  notion: {
-    title: "Connect Notion",
-    description: "Use a planning page as context for the work you want to do.",
-    action: "Connect Notion",
-    done: "Notion connected in this demo. No pages were accessed.",
-  },
-};
 
 function FigmaMark() {
   return (
@@ -61,59 +37,18 @@ export default function CopilotGettingStarted() {
   const [checklistStyle, setChecklistStyle] = useState<"original" | "compact">("compact");
   const [draft, setDraft] = useState("");
   const [mode, setMode] = useState<"Agent" | "Plan">("Agent");
-  const [completed, setCompleted] = useState<Set<StepId>>(new Set());
+  const [hasPlanned, setHasPlanned] = useState(false);
+  const [workspaceHasAgentsMd, setWorkspaceHasAgentsMd] = useState(true);
   const [hidden, setHidden] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [expanded, setExpanded] = useState<SetupId | "automation" | null>(null);
-  const [pending, setPending] = useState<SetupId | null>(null);
   const [notice, setNotice] = useState("");
-  const [submitted, setSubmitted] = useState<{ text: string; mode: "Agent" | "Plan" } | null>(null);
+  const [submitted, setSubmitted] = useState<{ text: string; mode: "Agent" | "Plan"; isInit: boolean } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [browserOpen, setBrowserOpen] = useState(false);
-  const [browserDraft, setBrowserDraft] = useState("");
-  const [browserUrl, setBrowserUrl] = useState("");
-  const [browserError, setBrowserError] = useState("");
-  const [automationName, setAutomationName] = useState("Daily workspace check-in");
-  const [automationPrompt, setAutomationPrompt] = useState("Summarize recent changes and open tasks in this workspace.");
-  const [schedule, setSchedule] = useState("weekdays");
-  const [time, setTime] = useState("09:00");
-  const [automationError, setAutomationError] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const detailsRef = useRef<HTMLElement>(null);
-  const browserInputRef = useRef<HTMLInputElement>(null);
-  const stepRefs = useRef<Partial<Record<StepId, HTMLButtonElement | null>>>({});
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const compact = checklistStyle === "compact";
-
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
-
-  useEffect(() => {
-    if (expanded) detailsRef.current?.focus();
-  }, [expanded, pending]);
-
-  useEffect(() => {
-    if (browserOpen) browserInputRef.current?.focus();
-  }, [browserOpen]);
-
-  function complete(id: StepId, message: string) {
-    setCompleted((previous) => new Set(previous).add(id));
-    setNotice(message);
-  }
-
-  function closeSetup() {
-    if (timer.current) clearTimeout(timer.current);
-    const id = expanded;
-    setPending(null);
-    setExpanded(null);
-    if (id) requestAnimationFrame(() => stepRefs.current[id]?.focus());
-  }
+  const completedCount = Number(hasPlanned) + Number(workspaceHasAgentsMd);
 
   function newSession() {
-    if (timer.current) clearTimeout(timer.current);
-    setPending(null);
-    setExpanded(null);
     setDraft("");
     setSubmitted(null);
     setNotice("");
@@ -123,70 +58,33 @@ export default function CopilotGettingStarted() {
 
   function reset() {
     newSession();
-    setCompleted(new Set());
+    setHasPlanned(false);
+    setWorkspaceHasAgentsMd(true);
     setMode("Agent");
     setHidden(false);
     setCollapsed(false);
-    setBrowserOpen(false);
-    setBrowserDraft("");
-    setBrowserUrl("");
-    setBrowserError("");
-    setAutomationName("Daily workspace check-in");
-    setAutomationPrompt("Summarize recent changes and open tasks in this workspace.");
-    setSchedule("weekdays");
-    setTime("09:00");
-    setAutomationError("");
   }
 
   function startStep(id: StepId) {
     setNotice("");
-    if (id === "plan") {
+    if (id === "init") {
+      setDraft((current) => INIT_COMMAND.test(current) ? current : `/init${current.trim() ? `\n${current}` : ""}`);
+    } else if (id === "plan") {
       setMode("Plan");
-      complete(id, "Plan selected. Outline the change first, then switch to Agent to build it.");
-      inputRef.current?.focus();
-    } else if (id === "browser") {
-      setBrowserOpen(true);
-      complete(id, "Browser opened. Enter your app's local URL to preview it.");
     } else {
-      if (id === "automation") setAutomationError("");
-      setExpanded(expanded === id ? null : id);
+      setNotice(`Opens ${id === "automation" ? "Automations" : "Connectors"}. Navigation only in this demo.`);
+      return;
     }
-  }
-
-  function runSetup() {
-    if (!expanded || expanded === "automation" || pending) return;
-    const id = expanded;
-    setPending(id);
-    timer.current = setTimeout(() => {
-      complete(id, SETUP[id].done);
-      setPending(null);
-      setExpanded(null);
-      inputRef.current?.focus();
-    }, 1100);
+    inputRef.current?.focus();
   }
 
   function send() {
     if (!draft.trim()) return;
-    setSubmitted({ text: draft.trim(), mode });
+    const isInit = INIT_COMMAND.test(draft);
+    setSubmitted({ text: draft.trim(), mode, isInit });
+    if (mode === "Plan" && !isInit) setHasPlanned(true);
     setDraft("");
     setNotice("");
-  }
-
-  function openUrl(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    let url: URL;
-    try {
-      url = new URL(browserDraft);
-    } catch {
-      setBrowserError("Enter a full local URL, such as http://localhost:3000.");
-      return;
-    }
-    if (!["http:", "https:"].includes(url.protocol) || !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
-      setBrowserError("Use a localhost URL. This demo only previews local apps.");
-      return;
-    }
-    setBrowserError("");
-    setBrowserUrl(url.href);
   }
 
   return (
@@ -240,7 +138,7 @@ export default function CopilotGettingStarted() {
                 <div className={styles.messageLabel}><Codicon name="account" /> You</div>
                 <p className={styles.userMessage}>{submitted.text}</p>
                 <div className={styles.messageLabel}><Codicon name="copilot" /> Copilot</div>
-                <p>{submitted.mode === "Plan" ? "Plan mode is selected. In a live session, Copilot would outline the steps before editing files." : "This is a demo conversation. No changes have been made to your workspace."}</p>
+                <p>{submitted.isInit ? "In the app, /init would create or update AGENTS.md with workspace instructions. No files were written in this demo." : submitted.mode === "Plan" ? "Plan mode is selected. In a live session, Copilot would outline the steps before editing files." : "This is a demo conversation. No changes have been made to your workspace."}</p>
                 <span className={styles.demoNote}>No agent request was sent.</span>
               </div>
             ) : <h1>What are we building, DIGITAAARLD?</h1>}
@@ -251,9 +149,6 @@ export default function CopilotGettingStarted() {
                 <span><Codicon name="folder" /> Branch</span>
                 <span><Codicon name="git-branch" /> main</span>
                 <span><Codicon name="copilot" /> Copilot</span>
-                {(["figma", "workiq", "notion"] as const).filter((id) => completed.has(id)).map((id) => (
-                  <span className={styles.connectorContext} key={id}><Codicon name="plug" />{id === "workiq" ? "WorkIQ" : id === "figma" ? "Figma" : "Notion"}</span>
-                ))}
               </div>
               <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); send(); }}>
                 <textarea
@@ -285,36 +180,39 @@ export default function CopilotGettingStarted() {
               {!hidden && (
                 <section className={`${styles.checklist} ${compact ? styles.compactWidth : ""}`} aria-label="Getting started checklist">
                   <div className={styles.checklistHeader}>
-                    <button className={styles.collapseButton} onClick={() => { closeSetup(); setCollapsed(!collapsed); }} aria-expanded={!collapsed} aria-controls="getting-started-steps">
+                    <button className={styles.collapseButton} onClick={() => setCollapsed(!collapsed)} aria-expanded={!collapsed} aria-controls="getting-started-steps">
                       <Codicon name={collapsed ? "chevron-right" : "chevron-down"} /><h2>Getting started</h2>
                     </button>
-                    <span className={styles.count}>{completed.size} of {STEPS.length}</span>
-                    <button className={styles.dismiss} aria-label="Hide getting started checklist" onClick={() => { closeSetup(); setHidden(true); inputRef.current?.focus(); }}><Codicon name="close" /></button>
+                    <span className={styles.count}>{completedCount} of {STEPS.length}</span>
+                    <button className={styles.dismiss} aria-label="Hide getting started checklist" onClick={() => { setHidden(true); inputRef.current?.focus(); }}><Codicon name="close" /></button>
                   </div>
-                  <div className={styles.progress} role="progressbar" aria-label="Getting started progress" aria-valuemin={0} aria-valuemax={STEPS.length} aria-valuenow={completed.size}>
-                    <div style={{ width: `${completed.size / STEPS.length * 100}%` }} />
+                  <div className={styles.progress} role="progressbar" aria-label="Getting started progress" aria-valuemin={0} aria-valuemax={STEPS.length} aria-valuenow={completedCount}>
+                    <div style={{ width: `${completedCount / STEPS.length * 100}%` }} />
                   </div>
                   {!collapsed && (
                     <ul className={styles.steps} id="getting-started-steps">
                       {STEPS.map((step) => {
-                        const done = completed.has(step.id);
+                        const done = step.id === "init" ? workspaceHasAgentsMd : step.id === "plan" && hasPlanned;
+                        const statusLabel = done ? step.id === "init" ? ". AGENTS.md present" : ". Tried" : "";
                         return (
                           <li key={step.id}>
                             <button
-                              ref={(element) => { stepRefs.current[step.id] = element; }}
-                              className={`${styles.step} ${done ? styles.stepDone : ""} ${expanded === step.id ? styles.stepExpanded : ""}`}
+                              className={`${styles.step} ${done ? styles.stepDone : ""}`}
                               onClick={() => startStep(step.id)}
-                              disabled={done || pending !== null}
-                              aria-label={`${step.label}. ${done ? "Completed" : step.action}`}
-                              aria-expanded={step.id === "plan" || step.id === "browser" ? undefined : expanded === step.id}
+                              aria-label={`${step.label}. ${step.action}${step.id === "workiq" ? ". WorkIQ MCP" : ""}${statusLabel}`}
+                              title={step.id === "init" && done ? "AGENTS.md exists. Run /init to review workspace instructions." : undefined}
                             >
-                              <span className={styles.check} aria-hidden="true">{done ? <Codicon name="check" /> : pending === step.id ? <Codicon name="loading" spin /> : null}</span>
+                              <span className={styles.check} aria-hidden="true">{done ? <Codicon name="check" /> : null}</span>
                               <span className={styles.stepLabel}>{step.label}</span>
                               <span className={styles.stepSource}>
                                 {step.source && <span>{step.source}</span>}
-                                {step.id === "figma" ? <FigmaMark /> : <Codicon name={step.icon} />}
+                                {step.id === "figma" ? <FigmaMark /> : step.id === "workiq" ? (
+                                  <Image className={styles.brandIcon} src={workiqIcon} alt="" title="WorkIQ MCP" width={16} height={16} />
+                                ) : step.id === "notion" ? (
+                                  <Image className={styles.brandIcon} src={notionIcon} alt="" width={16} height={16} unoptimized />
+                                ) : <Codicon name={step.icon} />}
                               </span>
-                              {!compact && <span className={styles.stepAction}>{done ? "Done" : pending === step.id ? "Working…" : step.action}</span>}
+                              {!compact && <span className={styles.stepAction}>{step.action}</span>}
                             </button>
                           </li>
                         );
@@ -324,63 +222,11 @@ export default function CopilotGettingStarted() {
                 </section>
               )}
 
-              {expanded && !hidden && (
-                <section className={`${styles.details} ${compact ? styles.compactWidth : ""}`} ref={detailsRef} tabIndex={-1} aria-label={expanded === "automation" ? "Set up an automation" : SETUP[expanded].title} onKeyDown={(event) => { if (event.key === "Escape") closeSetup(); }}>
-                  <div className={styles.detailsHeading}>
-                    <h2>{expanded === "automation" ? "Set up a daily check-in" : SETUP[expanded].title}</h2>
-                    <button className={styles.iconButton} aria-label="Close setup" onClick={closeSetup}><Codicon name="close" /></button>
-                  </div>
-                  {expanded === "automation" ? (
-                    <form onSubmit={(event) => {
-                      event.preventDefault();
-                      if (!automationName.trim() || !automationPrompt.trim() || !time) {
-                        setAutomationError("Add a name, prompt, and time before creating the automation.");
-                        return;
-                      }
-                      complete("automation", `${automationName.trim()} created in this demo. Nothing is scheduled to run.`);
-                      setExpanded(null);
-                      inputRef.current?.focus();
-                    }}>
-                      <label className={styles.field}>Name<input required value={automationName} maxLength={80} onChange={(event) => setAutomationName(event.target.value)} /></label>
-                      <label className={styles.field}>Prompt<textarea required value={automationPrompt} onChange={(event) => setAutomationPrompt(event.target.value)} /></label>
-                      <div className={styles.schedule}>
-                        <label className={styles.field}>Repeat<select value={schedule} onChange={(event) => setSchedule(event.target.value)}><option value="weekdays">Every weekday</option><option value="daily">Every day</option><option value="weekly">Every Monday</option></select></label>
-                        <label className={styles.field}>At<input type="time" required value={time} onChange={(event) => setTime(event.target.value)} /></label>
-                      </div>
-                      {automationError && <p className={styles.formError} role="alert">{automationError}</p>}
-                      <div className={styles.detailsFooter}><span>Demo only. Nothing will run.</span><button className={styles.setupButton} disabled={!automationName.trim() || !automationPrompt.trim()} type="submit">Create automation</button></div>
-                    </form>
-                  ) : (
-                    <>
-                      <p>{SETUP[expanded].description}</p>
-                      <div className={styles.detailsFooter}>
-                        <span>Demo only. No files or accounts are accessed.</span>
-                        <button className={styles.setupButton} disabled={pending !== null} onClick={runSetup}>{pending ? <><Codicon name="loading" spin />{expanded === "init" ? "Running /init…" : "Connecting…"}</> : SETUP[expanded].action}</button>
-                      </div>
-                    </>
-                  )}
-                </section>
-              )}
               <div className={`${styles.notice} ${compact ? styles.compactWidth : ""}`} role="status" aria-live="polite">{notice}</div>
             </div>
           </div>
         </main>
 
-        {browserOpen && (
-          <aside className={styles.browser} aria-label="Integrated browser">
-            <div className={styles.browserHeader}><Codicon name="browser" /><span>Browser</span><button className={styles.iconButton} aria-label="Close integrated browser" onClick={() => { setBrowserOpen(false); inputRef.current?.focus(); }}><Codicon name="close" /></button></div>
-            <form className={styles.addressBar} onSubmit={openUrl}>
-              <input ref={browserInputRef} aria-label="Local app URL" value={browserDraft} placeholder="http://localhost:3000" onChange={(event) => setBrowserDraft(event.target.value)} />
-              <button className={styles.iconButton} aria-label="Load local app" type="submit"><Codicon name="arrow-right" /></button>
-            </form>
-            {browserError && <p className={styles.browserError} role="alert">{browserError}</p>}
-            {browserUrl ? (
-              <iframe className={styles.browserFrame} title="Local app preview" src={browserUrl} sandbox="allow-scripts" />
-            ) : (
-              <div className={styles.browserEmpty}><Codicon name="browser" /><h2>Preview your app</h2><p>Start your dev server, then enter its local URL above.</p></div>
-            )}
-          </aside>
-        )}
       </div>
 
       <div className={styles.demoToolbar} aria-label="Checklist demo controls">
@@ -390,6 +236,15 @@ export default function CopilotGettingStarted() {
           <button aria-pressed={checklistStyle === "original"} onClick={() => setChecklistStyle("original")}>Original</button>
           <button aria-pressed={compact} onClick={() => setChecklistStyle("compact")}>Compact</button>
         </div>
+        <button
+          aria-label="Simulate AGENTS.md presence"
+          aria-pressed={workspaceHasAgentsMd}
+          title={workspaceHasAgentsMd ? "Demo workspace has AGENTS.md. Click to simulate it missing." : "Demo workspace has no AGENTS.md. Click to simulate it present."}
+          onClick={() => {
+            setWorkspaceHasAgentsMd(!workspaceHasAgentsMd);
+            setNotice("");
+          }}
+        ><Codicon name="file-code" />AGENTS.md</button>
         {hidden && <button onClick={() => { setHidden(false); setCollapsed(false); }}>Show checklist</button>}
         <button onClick={reset} title="Reset demo"><Codicon name="debug-restart" />Reset</button>
       </div>
