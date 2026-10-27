@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { BaseStyles, Banner, Button, Checkbox, Label, Select, TextInput, Textarea } from '@primer/react';
+import { BaseStyles, Banner, Button, Checkbox, FormControl, Label, Radio, RadioGroup, Select, TextInput, Textarea } from '@primer/react';
 import { ThemeProvider } from '@primer/react/next';
 import '@primer/primitives/dist/css/functional/themes/light.css';
 import { ArrowLeftIcon as ArrowLeft, ArrowRightIcon as ArrowRight, BookIcon as BookOpen, CheckCircleIcon as CheckCircle2, CodeIcon as Code2, FileCodeIcon as FileCode2, FileDirectoryIcon as Folder, GitCommitIcon as GitCommitHorizontal, GitPullRequestIcon as GitPullRequest, MarkGithubIcon as Github, PackageIcon as Package, PlusIcon as Plus, ServerIcon as Server, ShieldCheckIcon as ShieldCheck, AlertIcon as TriangleAlert, XCircleIcon as XCircle, } from '@primer/octicons-react';
-import { STORAGE_KEY, acknowledgments, addComment, assignPolicy, changeField, createSubmission, currentValidation, emptyState, fingerprint, moveStep, parseState, publicationErrors, reviewTier, simulateSourceEvent, simulateValidation, steps, toggleCheck, transition, } from './workflow';
+import { STORAGE_KEY, acknowledgments, addComment, assignPolicy, changeField, createSubmission, currentValidation, emptyState, fingerprint, moveStep, parseState, publicationErrors, requiresDiscoverySignIn, retentionSummary, reviewTier, simulateSourceEvent, simulateValidation, sourceError, steps, toggleCheck, toolCatalog, transition, } from './workflow';
 import type { Action, Field, Kind, Outcome, Policy, State, Submission, Tab, View } from './workflow';
 import styles from './page.module.css';
 function restore(): {
@@ -57,16 +57,16 @@ const narrative = {
     plugin: [
         ['Fix findings where the code lives', 'Checks belong to a specific commit. Publishers can turn a blocking finding into a pull request, merge the fix, and revalidate the new revision. Policy holds remain visible without preventing submission for review.', 'Claude ties validation to a commit and distinguishes blockers from review holds. GitHub adds the familiar check-to-PR recovery path.'],
         ['The listing stays with the source', 'The manifest and README supply the listing. Changing them through a pull request keeps the public description and installable code under the same review history. Revalidation refreshes the preview.', 'Claude also derives plugin metadata from source rather than maintaining a separate listing editor.'],
-        ['Make data use reviewable', 'Keep personal data, external transfers, retention, and audience disclosures together. Publishers make explicit declarations that reviewers can check against the plugin, rather than accepting inferred answers as consent.', 'The reconstructed Claude flow includes these four disclosures. Its exact authenticated form was not inspected.'],
+        ['Make data use reviewable', 'Ask what data is kept, for how long, and how it is deleted. Structured retention choices reveal only the relevant follow-up fields. Describe external recipients and purpose rather than treating a yes/no answer as sufficient disclosure.', 'Claude documents four disclosure topics, including retention. The specific choices and conditional fields here are our product proposal, not verified Claude form controls.'],
         ['Release through existing GitHub events', 'Publishers choose Releases, pushes to a tracked ref, or manual checks. An assigned policy determines who publishes; opting into automatic updates cannot override a hold or missing approval.', 'Claude documents webhook or scheduled update detection. GitHub can use its own release and push events without another webhook installation.'],
         ['Approval does not choose the launch date', 'The final review brings source, disclosures, and acknowledgments together. Submission starts review; approval makes a revision eligible to publish. The publication policy keeps the launch decision explicit.', 'Claude separates submission, approval, and publication. Four acknowledgment topics are documented, but their exact wording is not public.'],
     ],
     connector: [
-        ['Reuse the server definition', 'Import the endpoint from server.json, then check the connection before asking for listing details. Make topology requirements visible early so a publisher knows when Verified review is needed.', 'Claude supports remote HTTPS endpoints and requires Verified status for multiple URLs or URL patterns.'],
-        ['Review what the server actually exposes', 'Import tool titles, descriptions, and annotations from the server. Publishers fix metadata in source and re-sync, so the listing cannot drift into a second tool definition.', 'Claude imports capabilities and directs publishers to fix metadata on the server, not in a directory-only copy.'],
-        ['Fewer steps, the same evidence', 'Combine listing details with example tasks and reuse the organization profile. Six steps replace ten without dropping requirements. The publisher spends time describing what users can do, not re-entering company information.', 'Claude documents separate Listing, Use cases, and Company steps. GitHub already has an organization context to build on.'],
+        ['Connect before discovering tools', 'server.json can supply an endpoint, not authenticated tool access. Establish an MCP connection and authorize it when metadata is protected. Only then import tool schemas. Discovery does not execute tools.', 'Claude documents syncing from a connected server in the developer portal, not discovery by Claude Code from a repository. Lazy-auth servers may expose tools/list before sign-in.'],
+        ['Review the actual tool contract', 'Show each imported title, description, input schema, annotation, and data scope. Publishers fix metadata on the server and re-sync. A successful tools/list response is evidence of discovery, not proof that each tool works.', 'Claude says tools, prompts, and resources sync from the connected server. Actual tool execution is a separate publisher and reviewer testing requirement.'],
+        ['Keep listing copy separate from access requirements', 'Publishers describe the value, example tasks, and account prerequisites together. Keep the public support address distinct from the private review contact. Required assets and broader category selection remain future work.', 'Claude documents separate Listing, Use cases, and Company steps, plus icon and category requirements. This condensed flow covers the core text, not every asset requirement.'],
         ['Catch incompatible choices before review', 'Show how authentication and endpoint topology fit together. Changing authentication invalidates connection checks and testing confirmations, so reviewers receive evidence for the configuration being submitted.', 'Claude documents authentication constraints by topology. Surfacing them in the form avoids discovering conflicts only after submission.'],
-        ['Put declarations beside proof', 'Reviewers need to know both what data the server touches and how to exercise every tool. Keep disclosures, reviewer access, and reproducible tests together. Editing the test plan requires a fresh publisher confirmation.', 'Claude separates Data handling from Test and launch. Verified reviewers exercise every tool using a populated test environment.'],
+        ['Give reviewers a reproducible environment', 'Separate workspace setup, sign-in instructions, access restrictions, and test cases. Show the expected result for each imported tool. Schema discovery cannot replace these tests, and changing the plan requires a fresh confirmation.', 'Claude requires links, credentials where relevant, and steps for a populated test account. This prototype does not implement a secure credential handoff and never stores passwords or tokens.'],
         ['Give each review path a clear finish', 'Community screening and Verified review have explicit completion steps. Verified requires recorded reviewer tool tests before approval. Neither route silently publishes a new listing or promises a review deadline.', 'Claude distinguishes Community screening from Verified human review and documents seven acknowledgment topics. Publisher anecdotes are not turnaround guarantees.'],
     ],
     console: {
@@ -91,7 +91,8 @@ function ProductNarrative({ view, s, tab }: {
     <h2>{content[0]}</h2><p>{content[1]}</p>
     <aside className="competitive-insight" aria-label="Competitive insight">
       <h3>Competitive insight</h3><p>{content[2]}</p>
-      <a href="https://claude.com/docs/directory/publish" target="_blank" rel="noreferrer">Claude Directory documentation</a>
+      <a href={s?.kind === 'connector' ? 'https://claude.com/docs/connectors/building/submission' : 'https://claude.com/docs/plugins/submit'} target="_blank" rel="noreferrer">Claude submission documentation</a>
+      {s?.kind === 'connector' && <p><a href="https://claude.com/docs/connectors/building/lazy-authentication" target="_blank" rel="noreferrer">Metadata discovery and lazy authentication</a></p>}
     </aside>
   </aside>;
 }
@@ -106,6 +107,8 @@ function App() {
     const [reply, setReply] = useState('');
     const [query, setQuery] = useState('');
     const [busy, setBusy] = useState(false);
+    const [authRequest, setAuthRequest] = useState<{ id: string; fingerprint: string } | null>(null);
+    const authorizedConnection = useRef<{ id: string; fingerprint: string } | null>(null);
     const stateRef = useRef(state);
     const mounted = useRef(true);
     const heading = useRef<HTMLHeadingElement>(null);
@@ -168,10 +171,19 @@ function App() {
             commit({ ...current, submissions: [...current.submissions, item], activeId: item.id, view: 'wizard', tab: 'Overview' });
         });
     }
-    async function validate() {
+    async function validate(authorization?: string) {
         if (!s || busy)
             return;
         const id = s.id, source = fingerprint(s), outcome = s.scenario;
+        const error = sourceError(s);
+        if (error) { setErrors([error]); return; }
+        const authorized = authorization === source || (authorizedConnection.current?.id === id && authorizedConnection.current.fingerprint === source);
+        if (requiresDiscoverySignIn(s) && !authorized) {
+            setAuthRequest({ id, fingerprint: source });
+            setErrors([]);
+            return;
+        }
+        setAuthRequest(null);
         setBusy(true);
         setErrors([]);
         await new Promise(resolve => setTimeout(resolve, 350));
@@ -182,10 +194,19 @@ function App() {
             const item = current.submissions.find(d => d.id === id);
             if (!item || item.status !== 'Draft' || fingerprint(item) !== source)
                 throw new Error('Source changed while checks ran. Revalidate the current source.');
-            const result = simulateValidation(item, outcome);
+            const result = simulateValidation(item, outcome, authorized ? source : undefined);
             commit({ ...current, submissions: current.submissions.map(d => d.id === id ? result : d) });
         });
         setBusy(false);
+    }
+    function authorizeDiscovery() {
+        if (!s || authRequest?.id !== s.id || authRequest.fingerprint !== fingerprint(s)) {
+            setAuthRequest(null);
+            setErrors(['Connection settings changed. Connect again to authorize the current endpoint.']);
+            return;
+        }
+        authorizedConnection.current = authRequest;
+        void validate(authRequest.fingerprint);
     }
     function exportData() {
         attempt(() => {
@@ -197,36 +218,59 @@ function App() {
             URL.revokeObjectURL(url);
         });
     }
-    function input(key: Field, label: string, multiline = false, hint?: string, max?: number, locked = false) {
+    function input(key: Field, label: string, multiline = false, hint?: string, max?: number, locked = false, type: 'text' | 'url' | 'email' | 'number' = 'text') {
         return <div className="field" key={key}><label htmlFor={`field-${key}`}>{label}{locked && <span className="optional" aria-hidden="true"> · locked</span>}</label>
       {multiline
                 ? <Textarea id={`field-${key}`} value={f?.[key] ?? ''} readOnly={locked} onChange={e => field(key, e.target.value)} rows={4} maxLength={max} aria-describedby={hint ? `${key}-hint` : undefined} block/>
-                : <TextInput id={`field-${key}`} value={f?.[key] ?? ''} readOnly={locked} onChange={e => field(key, e.target.value)} maxLength={max} aria-describedby={hint ? `${key}-hint` : undefined} block/>}
+                : <TextInput id={`field-${key}`} value={f?.[key] ?? ''} readOnly={locked} onChange={e => field(key, e.target.value)} maxLength={max} type={type} min={type === 'number' ? 1 : undefined} step={type === 'number' ? 1 : undefined} aria-describedby={hint ? `${key}-hint` : undefined} block/>}
       {(hint || max) && <div className="field-help"><span id={`${key}-hint`}>{hint}</span>{max && <span>{f?.[key].length ?? 0}/{max}</span>}</div>}
     </div>;
     }
     function select(key: Field, label: string, values: string[], hint?: string) {
-        return <div className="field"><label htmlFor={`field-${key}`}>{label}</label><Select id={`field-${key}`} value={f?.[key] ?? ''} onChange={e => field(key, e.target.value)} block>
+        return <div className="field"><label htmlFor={`field-${key}`}>{label}</label><Select id={`field-${key}`} value={f?.[key] ?? ''} onChange={e => field(key, e.target.value)} aria-describedby={hint ? `${key}-hint` : undefined} block>
       {!values.includes(f?.[key] ?? '') && <Select.Option value="">Select an answer</Select.Option>}{values.map(value => <Select.Option key={value} value={value}>{value}</Select.Option>)}
-    </Select>{hint && <p className="field-help">{hint}</p>}</div>;
+    </Select>{hint && <p className="field-help" id={`${key}-hint`}>{hint}</p>}</div>;
+    }
+    function radio(key: Field, label: string, options: { value: string; caption: string }[], caption?: string) {
+        return <div className="field"><RadioGroup name={`field-${key}`} onChange={value => { if (value !== null) field(key, value); }}>
+          <RadioGroup.Label>{label}</RadioGroup.Label>
+          {caption && <RadioGroup.Caption>{caption}</RadioGroup.Caption>}
+          {options.map(option => <FormControl key={option.value}>
+            <Radio value={option.value} checked={f?.[key] === option.value} />
+            <FormControl.Label>{option.value}</FormControl.Label>
+            <FormControl.Caption>{option.caption}</FormControl.Caption>
+          </FormControl>)}
+        </RadioGroup></div>;
+    }
+    function discoveryAuthorization() {
+        if (!s || authRequest?.id !== s.id || authRequest.fingerprint !== fingerprint(s)) return null;
+        return <section className="authorization-panel" aria-label="Connection authorization">
+          <h3>Sign in before importing tool metadata</h3>
+          <p>The endpoint requires authorization for discovery. In the live product, you would sign in on the service&apos;s OAuth page and choose an account and workspace.</p>
+          <dl className="facts"><dt>Endpoint</dt><dd>{s.fields.endpoint}</dd><dt>Demo account</dt><dd>Northwind reviewer · Support sandbox</dd><dt>Requested scopes</dt><dd>{toolCatalog.map(tool => tool.scope).join(', ')}</dd></dl>
+          <p>This step imports schemas only. It does not call tools, and metadata annotations are not proof of safe behavior.</p>
+          <div className="actions"><Button variant="primary" onClick={authorizeDiscovery} disabled={busy}>Simulate sign-in and authorize</Button>
+            <Button onClick={() => { setAuthRequest(null); setErrors(['Sign-in canceled. Tool metadata was not imported.']); }}>Cancel sign-in</Button></div>
+        </section>;
     }
     function checkbox(key: string, text: string) {
         return <label className="checkbox" key={key}><Checkbox checked={s?.checks.includes(key) ?? false} onChange={() => check(key)}/><span>{text}</span></label>;
     }
     function checkPanel() {
         if (!s?.validation)
-            return <Notice>Checks have not run for this source.</Notice>;
+            return <Notice>{s?.kind === 'connector' ? 'No tool metadata imported. Connect to the server first.' : 'Checks have not run for this source.'}</Notice>;
         if (!currentValidation(s))
             return <Notice tone="warning">Source changed. Run checks again for the current revision.</Notice>;
         const result = s.validation.outcome;
         return <section className="checks-panel" aria-label="Commit checks">
       <div className="panel-title"><span><ShieldCheck size={18}/>marketplace/validate</span><Badge>{result === 'blocked' ? 'Blocked' : result === 'hold' ? 'Policy hold' : 'Passed'}</Badge></div>
-      <div className="check-row"><GitCommitHorizontal size={18}/><div><strong>{s.validation.revision}</strong><small>{s.kind === 'plugin' ? `${f?.path}/plugin.json` : 'Streamable HTTP · 3 read-only tools'}</small></div></div>
+      <div className="check-row"><GitCommitHorizontal size={18}/><div><strong>{s.validation.revision}</strong><small>{s.kind === 'plugin' ? `${f?.path}/plugin.json` : `Streamable HTTP · initialize → tools/list · ${requiresDiscoverySignIn(s) ? 'authorized discovery' : 'public metadata'}`}</small></div></div>
+      {s.kind === 'connector' && <div className="check-row"><Code2 size={18}/><div><strong>3 tool schemas imported · 0 tools executed</strong><small>Capabilities came from the connected server, not server.json. Test tool behavior separately.</small></div></div>}
       {result === 'blocked' ? <>
         <div className="check-row"><XCircle size={18} className="red"/><div><strong>{s.kind === 'plugin' ? 'Blocking: manifest name is missing' : 'Blocking: search_tickets title is missing'}</strong>
           <small>{s.kind === 'plugin' ? 'plugin.json:2 — add the required name in source.' : 'server/tools.ts:12 — set the title on the server, then re-sync.'}</small></div></div>
         {s.status === 'Draft' && <div className="panel-actions">{s.fixPr
-                        ? <><span><GitPullRequest size={16}/>Fix PR open · one source file changed</span><Button className="button primary" onClick={() => act('merge-fix-pr')} variant="primary">Merge fix and revalidate</Button></>
+                        ? <><span><GitPullRequest size={16}/>Fix PR open · one source file changed</span><Button className="button primary" onClick={() => act('merge-fix-pr')} variant="primary">{s.kind === 'plugin' ? 'Merge fix and revalidate' : 'Deploy metadata fix'}</Button></>
                         : <Button className="button" onClick={() => act('open-fix-pr')} variant="default" leadingVisual={GitPullRequest}>Open simulated fix PR</Button>}</div>}
       </> : result === 'hold' ? <div className="check-row"><TriangleAlert size={18} className="amber"/><div><strong>Policy hold: ownership needs review</strong><small>Submission is allowed. A reviewer must clear this hold before approval or publication.</small></div></div>
                 : <div className="check-row"><CheckCircle2 size={18} className="green"/><div><strong>Source and capability checks passed</strong><small>Warning: add an empty-result example. This does not block submission.</small></div></div>}
@@ -255,7 +299,7 @@ function App() {
         const label = steps[s.kind][s.step];
         if (s.step === 0)
             return <>
-      <p className="section-lead">{s.kind === 'plugin' ? 'The repository and folder supply the listing and every version. They lock on first submission.' : 'Start with the endpoint from server.json and check the connection.'}</p>
+      <p className="section-lead">{s.kind === 'plugin' ? 'The repository and folder supply the listing and every version. They lock on first submission.' : 'server.json supplies the endpoint. Connect to the running MCP server to import its tool metadata; sign in first if discovery is protected.'}</p>
       {s.kind === 'plugin' ? <>
         {input('repo', 'Repository', false, undefined, undefined, !!s.identity)}
         <div className="form-grid">{input('path', 'Plugin folder', false, 'Folder containing plugin.json.', undefined, !!s.identity)}{input('ref', 'Tracked branch or tag')}</div>
@@ -264,11 +308,18 @@ function App() {
           {checkbox('private-consent', 'Allow simulated inspection of this private repository.')}</>}
         {checkbox('permission', 'I have write access and permission to publish this repository.')}
       </> : <>
-        {input('endpoint', 'MCP server URL', false, 'HTTPS · Streamable HTTP', undefined, !!s.identity)}
+        {input('endpoint', 'MCP server URL', false, 'Publicly reachable HTTPS endpoint using Streamable HTTP. Do not include tokens in the URL.', undefined, !!s.identity, 'url')}
         {select('topology', 'Connection type', ['Universal URL', 'Multiple URLs', 'URL pattern'])}
         {f.topology !== 'Universal URL' && <Notice tone="warning">Verified review is required. This prototype validates one example URL; multi-endpoint configuration is not implemented.</Notice>}
+        {select('auth', 'Authentication method', ['OAuth DCR', 'OAuth CIMD', 'Publisher-provided OAuth client', 'Custom connection', 'None'], 'Choose the method your server supports before connecting.')}
+        {f.auth !== 'None' && radio('discoveryAccess', 'Who can list tool metadata?', [
+          { value: 'Sign-in required', caption: 'The server protects discovery. Authorize a publisher connection before importing tools.' },
+          { value: 'Public metadata', caption: 'The server allows initialize and tools/list without sign-in. Protected tool calls still require authorization.' },
+        ])}
+        {f.auth === 'None' && <p className="muted">Only use no authentication for a service that is safe to access without an account. Discovery does not execute its tools.</p>}
       </>}
-      <Button className="button primary" disabled={busy} onClick={validate} variant="primary" leadingVisual={ShieldCheck}>{busy ? 'Checking source…' : s.validation ? 'Run checks again' : s.kind === 'plugin' ? 'Validate repository' : 'Connect and check'}</Button>
+      <Button className="button primary" disabled={busy} onClick={() => void validate()} variant="primary" leadingVisual={ShieldCheck}>{busy ? 'Checking source…' : s.kind === 'connector' ? 'Connect and import metadata' : s.validation ? 'Run checks again' : 'Validate repository'}</Button>
+      {discoveryAuthorization()}
       {checkPanel()}
       <details className="simulation-controls"><summary>Scanner simulation controls</summary><label htmlFor="scenario">Next check result</label>
         <Select id="scenario" value={s.scenario} disabled={busy} onChange={e => attempt(() => update(item => ({ ...item, scenario: e.target.value as Outcome })))} block>
@@ -277,10 +328,18 @@ function App() {
     </>;
         if (label === 'Tools')
             return <>
-      <p className="section-lead">Imported capabilities remain source-owned. Fix metadata on the server and re-sync; do not maintain a directory-only copy.</p>
-      <div className="panel">{['search_tickets', 'get_project', 'find_documents'].map(name => <div className="tool-row" key={name}><Code2 size={18}/><div><strong>{name.replaceAll('_', ' ')}</strong><code>{name}</code></div><Badge>Read only</Badge></div>)}</div>
-      <p className="muted">All tools: readOnlyHint = true, destructiveHint = false.</p>
-      <Button className="button" disabled={busy} onClick={validate} variant="default">Re-sync tool metadata</Button>
+      <p className="section-lead">These schemas describe what the connected server exposes. They do not prove that the tools work. Titles, descriptions, inputs, and annotations come from the server; fix them there and re-sync. Data access and scope notes below are publisher declarations, not standard tools/list fields.</p>
+      {!currentValidation(s) ? <Notice tone="warning">The connection changed. Reconnect before reviewing tool metadata.</Notice> : <>
+        <p className="muted">Imported from {f.endpoint} · {s.validation?.revision} · no tools executed</p>
+        <div className="panel">{toolCatalog.map(tool => <section className="tool-contract" key={tool.name}>
+          <div className="tool-heading"><div><h3>{tool.title}</h3><code>{tool.name}</code></div><Badge>Read only</Badge></div>
+          <p>{tool.description}</p>
+          <dl className="facts"><dt>Input schema</dt><dd><details><summary>View JSON Schema</summary><pre>{JSON.stringify(tool.input, null, 2)}</pre></details></dd><dt>Data accessed</dt><dd>{tool.data}</dd><dt>Scope</dt><dd><code>{tool.scope}</code></dd><dt>Annotations</dt><dd>readOnlyHint: true · destructiveHint: false</dd></dl>
+        </section>)}</div>
+        <p className="field-help">Annotations are server declarations, not a safety guarantee. Test each tool and disclose the data it handles.</p>
+      </>}
+      <Button className="button" disabled={busy} onClick={() => void validate()} variant="default">Re-sync tool metadata</Button>
+      {discoveryAuthorization()}
       {checkbox('tools', 'The imported tools accurately describe my server.')}
     </>;
         if (label === 'Listing')
@@ -293,20 +352,53 @@ function App() {
       {input('name', 'Server name', false, undefined, 100)}{input('summary', 'Short description', false, undefined, 200)}
       {input('description', 'Description', true, undefined, 2000)}
       <div className="form-grid">{input('slug', 'Listing slug', false, 'Locks at first publication.', undefined, !!s.live)}{select('category', 'Category', ['Developer tools', 'Productivity', 'Support'])}</div>
-      {input('docs', 'Documentation URL')}{input('privacy', 'Privacy policy URL')}{input('support', 'Support email')}
-      {input('useCases', 'Example tasks', true)}{input('prerequisites', 'Prerequisites')}
+      {input('docs', 'Documentation URL', false, 'Public setup and tool documentation. Reviewers must be able to open it without signing in.', undefined, false, 'url')}
+      {input('privacy', 'Privacy policy URL', false, 'Explain data use, retention, deletion, and third-party sharing.', undefined, false, 'url')}
+      {input('support', 'Public support email', false, 'Shown to users on the listing. Your private review contact is collected at submission.', undefined, false, 'email')}
+      {input('useCases', 'Example tasks', true, 'Write prompts users can try. Describe the outcome, not a list of tool names.')}
+      {input('prerequisites', 'Account and plan requirements', true, 'Include required subscription tier, workspace role, and setup. State whether users need a paid account.')}
     </>;
         if (label === 'Authentication')
             return <>
+      <h3>User sign-in experience</h3>
       {select('auth', 'Authentication method', ['OAuth DCR', 'OAuth CIMD', 'Publisher-provided OAuth client', 'Custom connection', 'None'])}
+      <p>{f.auth === 'None' ? 'Users connect without signing in.' : f.discoveryAccess === 'Public metadata' ? 'Users can discover tools before signing in. The server must request authorization before a protected tool call.' : 'Users sign in when connecting, before protected metadata is imported.'}</p>
+      <p className="muted">The publisher connection used for discovery does not grant access to users or reviewers. Each connects with their own authorized account.</p>
+      {f.auth === 'OAuth DCR' && <p className="field-help">Dynamic Client Registration: the client registers with your authorization server during setup.</p>}
+      {f.auth === 'OAuth CIMD' && <p className="field-help">Client ID Metadata Document: your authorization server must support client metadata discovery.</p>}
       <div className="panel"><div className="panel-title">Compatibility</div><div className="panel-body"><p>URL patterns cannot use a publisher-provided OAuth client.</p><p>Multiple URLs cannot use a custom connection.</p></div></div>
-      <Notice>Changing authentication invalidates connection checks and testing. Return to Connection to revalidate. Client secrets and real credentials are deliberately not collected.</Notice>
+      {f.auth === 'Publisher-provided OAuth client' || f.auth === 'Custom connection' ? <Notice tone="warning">Credential registration and custom connection setup are not implemented in this prototype. Do not enter real client secrets. A production submission would need secure configuration before it could be verified.</Notice> : null}
+      <p className="field-help">Changing authentication invalidates discovery and testing. Return to Connection to reconnect. No passwords or tokens are stored in this draft.</p>
     </>;
         if (label === 'Data handling')
             return <>
-      {select('personal', 'Does the plugin read or store personal data?', ['No', 'Yes'])}
-      {select('transfers', 'Does it transfer data beyond declared connectors?', ['No', 'Yes'])}
-      {input('retention', 'Data retention')}{select('minors', 'Is the plugin intended for people under 18?', ['No', 'Yes'])}
+      <p className="section-lead">Describe what this plugin and services you operate do with user data, including logs, caches, and uploaded files. Treat each declared connector&apos;s own storage policy separately.</p>
+      {radio('personal', 'Does the plugin read or store personal data?', [
+        { value: 'No', caption: 'It does not access identifiable user or customer information.' },
+        { value: 'Yes', caption: 'For example, names, email addresses, support tickets, or document content.' },
+      ])}
+      {f.personal === 'Yes' && input('personalDetails', 'Personal data types and purpose', true, 'List the data accessed and why the plugin needs it. Do not paste actual customer data.')}
+      {radio('transfers', 'Does it send data beyond declared connectors?', [
+        { value: 'No', caption: 'No additional external recipients.' },
+        { value: 'Yes', caption: 'Data also goes to services not declared as connectors, including analytics or logging providers.' },
+      ])}
+      {f.transfers === 'Yes' && input('transferDetails', 'External recipients, data, and purpose', true, 'Name each service or domain, what it receives, and why. Include onward sharing by your service.')}
+      <h3>Retention and deletion</h3>
+      {radio('retention', 'How long do you keep data?', [
+        { value: 'No retention', caption: 'Process data without storing a copy, including in logs or caches.' },
+        { value: 'Session only', caption: 'Keep temporary data only while the task or session is running.' },
+        { value: 'Fixed period', caption: 'Automatically delete stored data after a defined number of days.' },
+        { value: 'Until deleted', caption: 'Keep data until a user or workspace administrator deletes it.' },
+        { value: 'Custom policy', caption: 'Different data types have different periods, or legal exceptions apply.' },
+      ], 'Choose the policy for data kept by the plugin or publisher, not the source system it reads.')}
+      {f.retention === 'Fixed period' && input('retentionDays', 'Maximum retention in days', false, 'Use a whole number. Include the longest period across copies and backups, or choose Custom policy for exceptions.', undefined, false, 'number')}
+      {f.retention && f.retention !== 'No retention' && <>
+        {input('storedData', 'What is kept, and where?', true, 'For example, request logs in your service, local cache files, or uploaded documents.')}
+        {f.retention === 'Custom policy' && input('retentionDetails', 'Retention schedule and justification', true, 'Specify each data type, maximum period, and any legal or backup exceptions.')}
+        {input('deletionProcess', 'How is data deleted?', true, 'Explain automatic cleanup or user/admin deletion, how to request it, and when copies and backups are removed.')}
+      </>}
+      {f.retention === 'No retention' && <p className="field-help">This declaration includes diagnostic logs and caches. If any copies remain after processing, choose a retention policy above.</p>}
+      {select('minors', 'Is the plugin intended for people under 18?', ['No', 'Yes'], 'Describe the intended audience, not whether a minor could technically access it.')}
     </>;
         if (label === 'Releases')
             return <>
@@ -321,8 +413,22 @@ function App() {
       {select('health', 'Does the connector handle personal health data?', ['No', 'Yes'])}
       {f.health === 'Yes' && input('safeguards', 'Health-data safeguards and test case', true)}
       {select('sponsored', 'Does the connector return sponsored content?', ['No', 'Yes'])}
-      <h3>Reviewer access and test plan</h3><Notice>Use a populated demo environment. Do not put credentials in this browser draft; secure credential delivery is outside this prototype.</Notice>
-      {input('access', 'Reviewer access URL')}{input('testSteps', 'Reviewer test instructions', true, 'Include sign-in steps, every tool, expected outputs, and cleanup.')}
+      <h3>Reviewer access</h3>
+      <p>Give reviewers a populated test workspace they can access independently. The publisher&apos;s discovery sign-in is not a reviewer account.</p>
+      <Button variant="invisible" onClick={() => attempt(() => update(item => {
+        let next = changeField(item, 'reviewerSetup', 'Northwind Support sandbox, Team plan, read-only reviewer role. Seed ticket NW-42, project API, and the migration runbook.');
+        next = changeField(next, 'reviewerSignIn', 'Open the reviewer URL, select Sign in with OAuth, and use the separately provisioned demo reviewer account. Select the Support sandbox workspace.');
+        return changeField(next, 'reviewerRestrictions', 'No SSO enforcement, MFA enrollment, IP allowlist, or VPN required for this sandbox.');
+      }))}>Use example reviewer setup</Button>
+      {input('access', 'Reviewer access URL', false, 'Landing page for the test environment, not a URL containing a token or password.', undefined, false, 'url')}
+      {input('reviewerSetup', 'Test workspace and prerequisites', true, 'Name the seeded workspace, plan, role, and sample data reviewers will need.')}
+      {input('reviewerSignIn', 'Reviewer sign-in instructions', true, 'Explain account provisioning and sign-in steps. Refer to a secure credential handoff; do not enter credentials here.')}
+      {input('reviewerRestrictions', 'SSO, MFA, and network requirements', true, 'Describe required SSO, MFA, IP allowlisting, VPN, or approval steps. Enter None if there are no restrictions.')}
+      <Notice>Secure credential delivery is not implemented. Do not enter passwords, client secrets, or tokens in these fields.</Notice>
+      <h3>Tool execution plan</h3>
+      <div className="test-coverage">{toolCatalog.map(tool => <div key={tool.name}><code>{tool.name}</code><p>{tool.example}</p><small>Expected: {tool.expected}. Read-only; no cleanup required.</small></div>)}</div>
+      {input('testSteps', 'Reviewer test instructions', true, 'Provide executable steps, inputs, and expected results for every imported tool. For write tools, include required permissions, safe test data, and cleanup.')}
+      <p className="field-help">The examples above cover the demo server. Reviewers must actually execute the tests; discovery and annotations alone are insufficient.</p>
       {checkbox('tested', 'I personally tested every tool.')}
     </>;
         return <>
@@ -330,9 +436,28 @@ function App() {
       <dl className="facts"><dt>Source</dt><dd>{s.kind === 'plugin' ? `${f.repo} / ${f.path} @ ${f.ref}` : f.endpoint}</dd>
         <dt>Checked revision</dt><dd>{s.validation?.revision ?? 'Not checked'}</dd>
         <dt>Publication</dt><dd>{s.policy} · {s.kind === 'plugin' ? f.trigger : reviewTier(s)}</dd></dl>
+      <section className="submission-summary" aria-label="Submission details">
+        <div className="summary-heading"><h3>{s.kind === 'plugin' ? 'Data handling and deletion' : 'Connection and reviewer access'}</h3>
+          <Button variant="invisible" size="small" onClick={() => attempt(() => update(item => moveStep(item, item.kind === 'plugin' ? 2 : 4)))}>Edit details</Button></div>
+        {s.kind === 'plugin' ? <dl className="facts">
+          <dt>Personal data</dt><dd>{f.personal}{f.personal === 'Yes' && <p>{f.personalDetails}</p>}</dd>
+          <dt>External transfers</dt><dd>{f.transfers}{f.transfers === 'Yes' && <p>{f.transferDetails}</p>}</dd>
+          <dt>Retention</dt><dd>{retentionSummary(f)}</dd>
+          {f.retention !== 'No retention' && <><dt>Stored data</dt><dd>{f.storedData}</dd><dt>Deletion</dt><dd>{f.deletionProcess}</dd></>}
+          <dt>Under-18 audience</dt><dd>{f.minors}</dd>
+        </dl> : <dl className="facts">
+          <dt>Authentication</dt><dd>{f.auth} · {f.auth === 'None' ? 'No sign-in' : f.discoveryAccess}</dd>
+          <dt>Discovery</dt><dd>Tool schemas imported; tool execution must be tested separately.</dd>
+          <dt>Data declarations</dt><dd>{f.ownership} · Health data: {f.health} · Sponsored content: {f.sponsored}{f.health === 'Yes' && <p>{f.safeguards}</p>}</dd>
+          <dt>Test environment</dt><dd>{f.access}<p>{f.reviewerSetup}</p></dd>
+          <dt>Reviewer sign-in</dt><dd>{f.reviewerSignIn}</dd>
+          <dt>Access restrictions</dt><dd>{f.reviewerRestrictions}</dd>
+          <dt>Execution plan</dt><dd className="preserve-lines">{f.testSteps}</dd>
+        </dl>}
+      </section>
       {s.kind === 'connector' && <>{select('reviewTier', 'Requested review path', ['Community', 'Verified'])}
         {f.topology !== 'Universal URL' && <Notice>Effective review: Verified, required by this topology.</Notice>}</>}
-      {input('email', 'Review contact email')}{input('notes', 'Notes for reviewers (optional)', true)}
+      {input('email', 'Private review contact email', false, 'Used for review questions and release decisions. Not displayed on the public listing.', undefined, false, 'email')}{input('notes', 'Notes for reviewers (optional)', true)}
       <h3>Acknowledgments</h3><p className="muted">Illustrative proposal wording, not a legal agreement or current GitHub policy.</p>
       {acknowledgments[s.kind].map((text, i) => checkbox(`compliance-${i}`, text))}
       <Notice>Submit starts review, not publication. No review turnaround is promised.</Notice>

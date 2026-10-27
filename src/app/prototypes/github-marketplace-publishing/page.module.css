@@ -44,6 +44,21 @@
 .surface :global(.global-left svg) { display: inline-block; }
 .surface :global(.error-summary ul) { list-style: disc; }
 .surface :global(.actions > button) { flex-shrink: 0; }
+.surface :global(.authorization-panel) { margin-top: 20px; padding: 20px; border: 1px solid var(--borderColor-attention-muted); border-radius: var(--borderRadius-medium); }
+.surface :global(.authorization-panel > p) { margin: 12px 0; }
+.surface :global(.authorization-panel .actions) { margin-top: 20px; }
+.surface :global(.tool-contract) { padding: 20px; border-bottom: 1px solid var(--borderColor-default); }
+.surface :global(.tool-contract:last-child) { border-bottom: 0; }
+.surface :global(.tool-heading), .surface :global(.summary-heading) { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.surface :global(.tool-contract > p) { margin-top: 12px; }
+.surface :global(.tool-contract .facts) { border: 0; padding: 0; margin-bottom: 0; font-size: 12px; }
+.surface :global(.tool-contract summary) { cursor: pointer; color: var(--fgColor-accent); }
+.surface :global(.tool-contract pre) { margin-top: 8px; padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bgColor-muted); border-radius: var(--borderRadius-medium); }
+.surface :global(.test-coverage) { margin-top: 16px; }
+.surface :global(.test-coverage > div) { padding: 16px 0; border-bottom: 1px solid var(--borderColor-default); }
+.surface :global(.test-coverage small) { color: var(--fgColor-muted); }
+.surface :global(.submission-summary) { margin-block: 28px; }
+.surface :global(.submission-summary .facts) { margin-top: 8px; }
 .surface :global(*) { box-sizing: border-box; scrollbar-color: var(--borderColor-emphasis) var(--subtle); scrollbar-width: thin; }
 .surface :global(a) { touch-action: manipulation; }
 .surface :global(a:focus-visible), .surface :global(summary:focus-visible) {

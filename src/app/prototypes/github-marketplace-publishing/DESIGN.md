@@ -21,6 +21,17 @@ Start from repository discovery. Keep plugins and MCP services as separate submi
 | Publisher console | Review conversation, candidate versions, pending listing diffs, publication policy |
 | Product Narrative | Explain the current product decision, with competitive research as a secondary aside |
 
+### Submission fidelity
+
+- Retention uses explicit choices: no retention, session only, fixed period, until deleted, or custom policy. Follow-up fields ask for days, data types and storage location, deletion, and exceptions only when relevant. Personal-data use and external transfers need descriptions when declared. Changed disclosures clear prior compliance acknowledgments.
+- The final review shows the actual data declarations and retention policy, or the connector's authentication, test workspace, restrictions, and execution plan. The public support address and private review contact have distinct labels.
+- Connector discovery starts with a running endpoint, not repository inspection. Protected discovery requires an explicit simulated sign-in and authorization. Public metadata can be imported without sign-in. Authorization exists only in memory and is bound to the current connection settings.
+- The tool page shows descriptions, JSON input schemas, and annotations. Data-access and scope notes are labeled publisher declarations. It explicitly distinguishes importing schemas from executing tools.
+- Reviewer access separates seeded workspace setup, sign-in instructions, SSO/MFA/network restrictions, and execution steps. Changing those answers clears the testing confirmation. Credentials are not stored in draft text.
+- Older browser drafts remain readable. Earlier free-text retention is preserved as a custom policy requiring review; missing new fields are left unanswered. Existing published snapshots are not replaced.
+
+The retention choices and conditional controls are marketplace design proposals. Claude's documentation confirms the topics, not these exact controls.
+
 Use official GitHub Primer React components, Primer theme tokens, and Octicons. The GitHub light theme is scoped to this route; other prototypes keep their VS Code visual language. Buttons, fields, selectors, checkboxes, status labels, and banners use Primer rather than locally styled substitutes.
 
 The publisher fills the available width and height below the playground navigation. Route-scoped layout rules remove the catalog container's outer padding without changing other prototypes. Content retains its own internal spacing.
@@ -60,6 +71,7 @@ Try a private source, a policy hold, a multi-URL connector requiring Verified re
 - This port uses stable Primer React 38.42 rather than the current 39 release candidate.
 - The original Vite prototype and regression suite remain in `github/digitarald-brain`, under `previews/github-marketplace`, at commit `629579d`. They are the reference baseline, not a dependency.
 - Competitive context derives from the Claude Directory research captured in that repository and [Claude's publishing documentation](https://claude.com/docs/directory/publish). The GitHub flow is a proposal, not current product policy.
+- Rechecked on October 27: [Submit a connector](https://claude.com/docs/connectors/building/submission) explicitly says tools, prompts, and resources sync from a connected server in the developer portal. It does not say Claude Code discovers them from a repository. [Lazy authentication](https://claude.com/docs/connectors/building/lazy-authentication) allows `initialize` and `tools/list` before sign-in when the server supports public metadata. [Testing guidance](https://claude.com/docs/connectors/building/testing) distinguishes metadata discovery from `tools/call` and requires populated reviewer accounts.
 - Browser walkthroughs verified plugin fix-PR recovery, draft reload, publication, a failed update preserving the live version, and a Verified connector reaching publication. The 1440px and 390px layouts had no page overflow. Another prototype retained its dark theme. TypeScript, scoped lint, and static export passed.
 
 ## Open questions
@@ -67,6 +79,8 @@ Try a private source, a policy hold, a multi-URL connector requiring Verified re
 1. Do publishers understand the distinction between an approved candidate and the live revision without explanation?
 2. Should Product Narrative follow the active step on mobile or open as a separate presentation view?
 3. Which release-trigger and publication-policy defaults best match maintainers' existing release practices?
+4. How should publishers provide secure, time-limited reviewer access and prove that reviewers can reach the right tenant?
+5. What listing assets, category choices, plan/pricing information, and supported-client declarations should be required before publication?
 
 ## Out of scope
 
@@ -74,3 +88,4 @@ Try a private source, a policy hold, a multi-URL connector requiring Verified re
 - Live MCP connections, credential storage, multi-endpoint configuration, and asset uploads.
 - Real telemetry. Usage and health numbers are explicitly sample data.
 - Multiple listings of the same type, collaboration, or cross-origin draft transfer.
+- Listing icon/screenshots, multiple categories, real OAuth client registration, production account ownership checks, detailed timeout/permission-denied recovery, and real run-by-run reviewer test evidence remain lower-fidelity areas. A passing demo is not evidence that these production prerequisites are configured.

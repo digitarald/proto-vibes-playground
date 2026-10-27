@@ -26,7 +26,13 @@ export const acknowledgments = {
   ],
 };
 
+const additionalFieldDefaults = {
+  retentionDays: '', retentionDetails: '', storedData: '', deletionProcess: '',
+  personalDetails: '', transferDetails: '', discoveryAccess: 'Sign-in required',
+  reviewerSetup: '', reviewerSignIn: '', reviewerRestrictions: '',
+};
 const defaultFields = {
+  ...additionalFieldDefaults,
   repo: 'northwind/support-toolkit', path: 'plugins/support-toolkit', ref: 'main',
   visibility: 'Public', endpoint: 'https://mcp.northwind.example/mcp', topology: 'Universal URL',
   name: 'Northwind Helpdesk', summary: 'Find tickets, projects, and documents from your workspace.',
@@ -42,6 +48,12 @@ const defaultFields = {
   testSteps: 'Sign in to the seeded demo workspace using OAuth (no SSO or MFA).\nsearch_tickets: search NW-42; expect one ticket.\nget_project: open project API; expect its title and owner.\nfind_documents: search migration; expect the runbook link.\nAll tools are read-only; no cleanup required.',
   notes: '', trigger: 'GitHub Releases', autoPublish: 'No', reviewTier: 'Community',
 };
+export const retentionOptions = ['No retention', 'Session only', 'Fixed period', 'Until deleted', 'Custom policy'];
+export const toolCatalog = [
+  { name: 'search_tickets', title: 'Search tickets', description: 'Find tickets visible to the signed-in user by query and status.', input: { type: 'object', properties: { query: { type: 'string' }, status: { type: 'string', enum: ['open', 'closed'] } }, required: ['query'] }, scope: 'tickets:read', data: 'Ticket text, requester names, and email addresses', example: 'Search for NW-42', expected: 'One matching ticket with its title and URL' },
+  { name: 'get_project', title: 'Get project', description: 'Read a project and its owner by project ID.', input: { type: 'object', properties: { projectId: { type: 'string' } }, required: ['projectId'] }, scope: 'projects:read', data: 'Project names and owner profiles', example: 'Get project API', expected: 'The API project title and owner' },
+  { name: 'find_documents', title: 'Find documents', description: 'Search documents available in the current workspace.', input: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] }, scope: 'documents:read', data: 'Document titles, excerpts, and links', example: 'Find the migration runbook', expected: 'A link to the seeded migration runbook' },
+];
 export type Fields = typeof defaultFields;
 export type Field = keyof Fields;
 export type Validation = { fingerprint: string; outcome: Outcome; revision: string };
@@ -81,9 +93,11 @@ export function fingerprint(s: Submission): string {
   const f = s.fields;
   return JSON.stringify(s.kind === 'plugin'
     ? [sourceIdentity(s), f.ref, f.visibility, s.revision, s.sourceSummary, s.checks.includes('private-consent')]
-    : [f.endpoint, f.topology, f.auth, s.revision]);
+    : [f.endpoint, f.topology, f.auth, f.discoveryAccess, s.revision]);
 }
 export const currentValidation = (s: Submission): boolean => s.validation?.fingerprint === fingerprint(s);
+export const requiresDiscoverySignIn = (s: Submission): boolean =>
+  s.kind === 'connector' && s.fields.auth !== 'None' && s.fields.discoveryAccess === 'Sign-in required';
 export const reviewTier = (s: Submission): string =>
   s.kind === 'connector' && (s.fields.topology !== 'Universal URL' || s.fields.reviewTier === 'Verified') ? 'Verified' : 'Community';
 export function validHttps(value: string): boolean {
@@ -110,6 +124,8 @@ const choices: Partial<Record<Field, readonly string[]>> = {
   ownership: ['First-party API', 'Authorized partner proxy', 'Uncontrolled third-party API'],
   trigger: ['GitHub Releases', 'Push to tracked ref', 'Manual'],
   autoPublish: ['No', 'Yes'], reviewTier: ['Community', 'Verified'],
+  retention: ['', ...retentionOptions],
+  discoveryAccess: ['Sign-in required', 'Public metadata'],
 };
 export function stepErrors(s: Submission, step = s.step): string[] {
   const f = s.fields;
@@ -126,6 +142,7 @@ export function stepErrors(s: Submission, step = s.step): string[] {
     if (!currentValidation(s)) errors.push('Run checks for the current source before continuing.');
     else if (s.validation?.outcome === 'blocked') errors.push('Resolve the blocking finding and revalidate.');
     if (s.kind === 'plugin') confirm('permission', 'Confirm permission to publish this repository.');
+    if (s.kind === 'connector') errors.push(...authenticationErrors(s));
   }
   if (label === 'Tools') confirm('tools', 'Confirm the imported tool capabilities.');
   if (label === 'Listing') {
@@ -140,12 +157,19 @@ export function stepErrors(s: Submission, step = s.step): string[] {
     }
   }
   if (label === 'Authentication') {
-    if (f.topology === 'URL pattern' && f.auth === 'Publisher-provided OAuth client') errors.push('URL patterns require DCR, CIMD, custom connection, or no authentication; a publisher-provided client is incompatible.');
-    if (f.topology === 'Multiple URLs' && f.auth === 'Custom connection') errors.push('Custom connection cannot be combined with multiple URLs.');
+    errors.push(...authenticationErrors(s));
   }
   if (label === 'Data handling') {
     required('personal', 'Personal data disclosure'); required('transfers', 'External transfer disclosure');
     required('retention', 'Data retention'); required('minors', 'Audience disclosure');
+    if (f.personal === 'Yes') required('personalDetails', 'Personal data types and purpose');
+    if (f.transfers === 'Yes') required('transferDetails', 'External recipients, data, and purpose');
+    if (f.retention && f.retention !== 'No retention') {
+      required('storedData', 'Data kept by the plugin or publisher');
+      required('deletionProcess', 'Deletion process');
+    }
+    if (f.retention === 'Fixed period' && (!/^[1-9]\d*$/.test(f.retentionDays) || !Number.isSafeInteger(Number(f.retentionDays)))) errors.push('Enter a whole number of retention days greater than zero.');
+    if (f.retention === 'Custom policy') required('retentionDetails', 'Retention schedule and justification');
   }
   if (label === 'Data and testing') {
     required('health', 'Health data disclosure'); required('sponsored', 'Sponsored content disclosure');
@@ -153,6 +177,9 @@ export function stepErrors(s: Submission, step = s.step): string[] {
     if (f.sponsored === 'Yes') errors.push('Sponsored content is unsupported in this prototype policy.');
     if (f.ownership === 'Uncontrolled third-party API') errors.push('Obtain authorization for the underlying API before submitting.');
     url('access', 'Reviewer access'); required('testSteps', 'Reviewer test instructions');
+    required('reviewerSetup', 'Test workspace and prerequisites');
+    required('reviewerSignIn', 'Reviewer sign-in instructions');
+    required('reviewerRestrictions', 'SSO, MFA, and network requirements');
     confirm('tested', 'Confirm you personally tested every tool.');
   }
   if (label === 'Review and submit') {
@@ -160,6 +187,18 @@ export function stepErrors(s: Submission, step = s.step): string[] {
     acknowledgments[s.kind].forEach((_, i) => confirm(`compliance-${i}`, `Accept acknowledgment ${i + 1}.`));
   }
   return errors;
+}
+function authenticationErrors(s: Submission): string[] {
+  const f = s.fields;
+  const errors: string[] = [];
+  if (f.topology === 'URL pattern' && f.auth === 'Publisher-provided OAuth client') errors.push('URL patterns cannot use a publisher-provided OAuth client. Choose a compatible method.');
+  if (f.topology === 'Multiple URLs' && f.auth === 'Custom connection') errors.push('Custom connection cannot be combined with multiple URLs.');
+  return errors;
+}
+export function retentionSummary(fields: Fields): string {
+  if (fields.retention === 'Fixed period') return `${fields.retentionDays || 'Unspecified'} days`;
+  if (fields.retention === 'Custom policy') return fields.retentionDetails || 'Custom policy not described';
+  return fields.retention || 'Not specified';
 }
 export function submissionErrors(s: Submission): string[] {
   const invalid = Object.entries(choices).filter(([key, values]) => !values.includes(s.fields[key as Field]));
@@ -179,7 +218,10 @@ export function changeField(s: Submission, key: Field, value: string): Submissio
     next.checks = s.checks.filter(c => !['tools', 'tested'].includes(c));
     next.fixPr = null;
   }
-  if (['access', 'testSteps', 'safeguards'].includes(key)) next.checks = next.checks.filter(c => c !== 'tested');
+  if (['access', 'testSteps', 'safeguards', 'reviewerSetup', 'reviewerSignIn', 'reviewerRestrictions'].includes(key)) next.checks = next.checks.filter(c => c !== 'tested');
+  if (['personal', 'transfers', 'retention', 'retentionDays', 'retentionDetails', 'storedData', 'deletionProcess', 'personalDetails', 'transferDetails', 'minors', 'ownership', 'health', 'sponsored', 'safeguards'].includes(key)) {
+    next.checks = next.checks.filter(c => !c.startsWith('compliance-'));
+  }
   if (['repo', 'path'].includes(key)) next.checks = next.checks.filter(c => !['private-consent', 'permission'].includes(c));
   return next;
 }
@@ -195,10 +237,15 @@ export function moveStep(s: Submission, step: number): Submission {
   }
   return { ...s, step };
 }
-export function simulateValidation(s: Submission, outcome: Outcome = s.scenario): Submission {
+export function simulateValidation(s: Submission, outcome: Outcome = s.scenario, authorizedFingerprint?: string): Submission {
   if (s.status !== 'Draft') throw new Error('Open a revision before validating.');
   const error = sourceError(s);
   if (error) throw new Error(error);
+  if (s.kind === 'connector') {
+    const errors = authenticationErrors(s);
+    if (errors.length) throw new Error(errors.join('\n'));
+    if (requiresDiscoverySignIn(s) && authorizedFingerprint !== fingerprint(s)) throw new Error('Sign in and authorize the connection before importing protected tool metadata.');
+  }
   const revision = revisionId(s);
   const fields = s.kind === 'plugin' ? {
     ...s.fields, name: 'Support Toolkit', summary: s.sourceSummary,
@@ -209,7 +256,7 @@ export function simulateValidation(s: Submission, outcome: Outcome = s.scenario)
     verifiedFingerprint: null, publicationRequested: false,
     versions: [...s.versions.filter(v => v.revision !== revision || v.state === 'Live' || v.state === 'Superseded'),
       { revision, outcome, state: outcome === 'blocked' ? 'Failed' : 'Candidate' }],
-  }, 'Checks', `${revision}: ${outcome === 'blocked' ? 'blocking finding' : outcome === 'hold' ? 'checks complete; reviewer hold' : 'checks passed'}.`);
+  }, 'Checks', `${revision}: ${outcome === 'blocked' ? 'blocking finding' : outcome === 'hold' ? 'checks complete; reviewer hold' : 'checks passed'}.${s.kind === 'connector' ? ' Imported tools/list metadata; no tools were executed.' : ''}`);
 }
 
 export type Action = 'submit' | 'request-changes' | 'revise' | 'clear-hold' | 'verify-tools' | 'approve' |
@@ -272,6 +319,7 @@ export function transition(s: Submission, action: Action): Submission {
   }
   if (action === 'merge-fix-pr' && s.status === 'Draft' && s.fixPr === fingerprint(s)) {
     const next = { ...s, revision: s.revision + 1, fixPr: null, scenario: 'pass' as const };
+    if (s.kind === 'connector') return event({ ...next, validation: null, checks: next.checks.filter(c => !['tools', 'tested'].includes(c)) }, 'Publisher', 'Deployed the tool metadata fix. Reconnect and import the new metadata.');
     return simulateValidation(event(next, 'Publisher', 'Merged simulated fix PR; revalidating the new revision.'), 'pass');
   }
   if (action === 'source-edit' && s.kind === 'plugin' && s.status === 'Draft') {
@@ -301,6 +349,17 @@ function fieldsValid(v: unknown): v is Fields {
   return isRecord(v) && Object.keys(defaultFields).every(k => typeof v[k] === 'string')
     && Object.entries(choices).every(([key, options]) => options.includes(String(v[key])));
 }
+function restoreAdditionalFields(value: unknown): void {
+  if (!isRecord(value)) return;
+  for (const [key, fallback] of Object.entries(additionalFieldDefaults)) {
+    if (!(key in value)) value[key] = fallback;
+  }
+  // Keep earlier free-text retention answers available for review rather than discarding drafts.
+  if (typeof value.retention === 'string' && value.retention && !retentionOptions.includes(value.retention)) {
+    value.retentionDetails = value.retention;
+    value.retention = 'Custom policy';
+  }
+}
 export function parseState(raw: string): State {
   const state: unknown = JSON.parse(raw);
   const invalid = () => { throw new Error('Saved data is invalid or from an unsupported version. Export it before resetting.'); };
@@ -310,6 +369,10 @@ export function parseState(raw: string): State {
     || !(state.activeId === null || typeof state.activeId === 'string')) return invalid();
   const ids = new Set<string>();
   for (const item of state.submissions) {
+    if (isRecord(item)) {
+      restoreAdditionalFields(item.fields);
+      if (isRecord(item.live)) restoreAdditionalFields(item.live.fields);
+    }
     if (!isRecord(item) || !oneOf(item.kind, ['plugin', 'connector']) || typeof item.id !== 'string' || !item.id || ids.has(item.id)
       || !oneOf(item.status, ['Draft', 'In review', 'Changes requested', 'Approved', 'Published'])
       || !Number.isInteger(item.step) || Number(item.step) < 0 || Number(item.step) >= (item.kind === 'plugin' ? 5 : 6)
