@@ -25,6 +25,8 @@ Use official GitHub Primer React components, Primer theme tokens, and Octicons. 
 
 The publisher fills the available width and height below the playground navigation. Route-scoped layout rules remove the catalog container's outer padding without changing other prototypes. Content retains its own internal spacing.
 
+The playground navigation is a compact utility strip with 12px text and icons, unboxed links, and visible keyboard focus. This route matches the strip to its light header; other prototypes keep their dark shell. Touch targets expand on coarse pointers.
+
 Product Narrative and demo context live in a small floating toolbar. No prototype banner or fictional-source labels interrupt the publisher surface.
 
 ## Patterns carried forward

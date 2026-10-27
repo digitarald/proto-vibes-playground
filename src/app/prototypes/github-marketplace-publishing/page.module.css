@@ -11,6 +11,16 @@
   max-width: none;
   padding: 0;
 }
+:global(div):has(> main .surface) > :global(nav),
+:global(div):has(> main .loading) > :global(nav) {
+  --muted: #59636e;
+  --foreground: #1f2328;
+  --border: #d1d9e0;
+  --hover: #eff2f5;
+  --accent: #0969da;
+  background: #f6f8fa;
+  backdrop-filter: none;
+}
 .surface {
   --muted: var(--fgColor-muted);
   --border: var(--borderColor-default);
