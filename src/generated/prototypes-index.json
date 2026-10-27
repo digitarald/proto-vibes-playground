@@ -1,5 +1,20 @@
 [
   {
+    "slug": "github-marketplace-publishing",
+    "title": "GitHub Marketplace Publishing",
+    "description": "Repository-first plugin and MCP publishing with source checks, review, publication policies, and a product narrative.",
+    "author": "Team",
+    "tags": [
+      "github",
+      "marketplace",
+      "plugins",
+      "mcp"
+    ],
+    "createdAt": "2026-10-27",
+    "hasDesign": true,
+    "variant": null
+  },
+  {
     "slug": "contextual-connector-recommendations",
     "title": "Contextual Connector Recommendations",
     "description": "Compare quiet inline and benefit-led Figma connector recommendations beneath the chat composer.",
