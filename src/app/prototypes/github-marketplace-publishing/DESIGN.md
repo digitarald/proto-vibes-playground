@@ -23,6 +23,8 @@ Start from repository discovery. Keep plugins and MCP services as separate submi
 
 Use official GitHub Primer React components, Primer theme tokens, and Octicons. The GitHub light theme is scoped to this route; other prototypes keep their VS Code visual language. Buttons, fields, selectors, checkboxes, status labels, and banners use Primer rather than locally styled substitutes.
 
+The publisher fills the available width and height below the playground navigation. Route-scoped layout rules remove the catalog container's outer padding without changing other prototypes. Content retains its own internal spacing.
+
 Product Narrative and demo context live in a small floating toolbar. No prototype banner or fictional-source labels interrupt the publisher surface.
 
 ## Patterns carried forward

@@ -1,3 +1,16 @@
+:global(div):has(> main .surface),
+:global(div):has(> main .loading) {
+  display: flex;
+  flex-direction: column;
+}
+:global(main):has(.surface),
+:global(main):has(.loading) {
+  flex: 1;
+  display: grid;
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
 .surface {
   --muted: var(--fgColor-muted);
   --border: var(--borderColor-default);
@@ -7,11 +20,9 @@
   color: var(--fgColor-default);
   background: var(--bgColor-default);
   font: var(--text-body-shorthand-medium);
-  min-height: calc(100vh - 100px);
+  min-height: 100%;
   padding-bottom: 56px;
-  width: calc(100vw - 48px);
-  max-width: 1600px;
-  margin-left: calc(50% - min(800px, 50vw - 24px));
+  width: 100%;
 }
 .loading { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 48px; }
 .surface :global(.notice) { margin: 18px 0; }
