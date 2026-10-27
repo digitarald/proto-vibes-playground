@@ -23,14 +23,17 @@ Start from repository discovery. Keep plugins and MCP services as separate submi
 
 ### Submission fidelity
 
-- Retention uses explicit choices: no retention, session only, fixed period, until deleted, or custom policy. Follow-up fields ask for days, data types and storage location, deletion, and exceptions only when relevant. Personal-data use and external transfers need descriptions when declared. Changed disclosures clear prior compliance acknowledgments.
+- Data handling starts with four short decisions. Personal-data access distinguishes No, Reads only, and Reads and stores, including access through connectors. Retention uses No retention, Limited retention, and Custom policy. Limited retention asks only for session-end deletion or a day count; exceptions can point to an existing retention/deletion policy. No arbitrary policy threshold is borrowed from Claude.
+- External transfers reference the README or public documentation instead of requiring a duplicate disclosure. Optional notes preserve richer explanations without making them required for every publisher. Changed disclosures clear prior compliance acknowledgments.
+- The source uses the discovered folder and follows the default branch unless overridden. Folder/reference overrides and validation criteria are collapsed disclosures. Empty folder means repository root; empty reference follows the default branch. Branch tracking and version pinning are explained beside the override.
+- Continue and Submit are disabled until their prerequisites are satisfied, with the first unmet requirement beside the action. If an earlier step needs attention, a direct link takes the publisher there. Save and exit stays in the page header on every step.
 - The final review shows the actual data declarations and retention policy, or the connector's authentication, test workspace, restrictions, and execution plan. The public support address and private review contact have distinct labels.
 - Connector discovery starts with a running endpoint, not repository inspection. Protected discovery requires an explicit simulated sign-in and authorization. Public metadata can be imported without sign-in. Authorization exists only in memory and is bound to the current connection settings.
 - The tool page shows descriptions, JSON input schemas, and annotations. Data-access and scope notes are labeled publisher declarations. It explicitly distinguishes importing schemas from executing tools.
 - Reviewer access separates seeded workspace setup, sign-in instructions, SSO/MFA/network restrictions, and execution steps. Changing those answers clears the testing confirmation. Credentials are not stored in draft text.
-- Older browser drafts remain readable. Earlier free-text retention is preserved as a custom policy requiring review; missing new fields are left unanswered. Existing published snapshots are not replaced.
+- Older browser drafts remain readable. Earlier session/fixed-duration choices become Limited retention without losing their duration; other retention text and optional details remain available. A legacy personal-data Yes answer requires explicit read/store confirmation rather than an inferred answer. Existing published snapshots are not replaced.
 
-The retention choices and conditional controls are marketplace design proposals. Claude's documentation confirms the topics, not these exact controls.
+The retention choices and conditional controls are marketplace design proposals. User-supplied portal screenshots informed the distinction between reading and storing data, coarse retention choices, documentation references, and progressive source settings. The implementation does not copy their layout, exact wording, or retention threshold.
 
 Use official GitHub Primer React components, Primer theme tokens, and Octicons. The GitHub light theme is scoped to this route; other prototypes keep their VS Code visual language. Buttons, fields, selectors, checkboxes, status labels, and banners use Primer rather than locally styled substitutes.
 

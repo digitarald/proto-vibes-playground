@@ -4,7 +4,7 @@ import { BaseStyles, Banner, Button, Checkbox, FormControl, Label, Radio, RadioG
 import { ThemeProvider } from '@primer/react/next';
 import '@primer/primitives/dist/css/functional/themes/light.css';
 import { ArrowLeftIcon as ArrowLeft, ArrowRightIcon as ArrowRight, BookIcon as BookOpen, CheckCircleIcon as CheckCircle2, CodeIcon as Code2, FileCodeIcon as FileCode2, FileDirectoryIcon as Folder, GitCommitIcon as GitCommitHorizontal, GitPullRequestIcon as GitPullRequest, MarkGithubIcon as Github, PackageIcon as Package, PlusIcon as Plus, ServerIcon as Server, ShieldCheckIcon as ShieldCheck, AlertIcon as TriangleAlert, XCircleIcon as XCircle, } from '@primer/octicons-react';
-import { STORAGE_KEY, acknowledgments, addComment, assignPolicy, changeField, createSubmission, currentValidation, emptyState, fingerprint, moveStep, parseState, publicationErrors, requiresDiscoverySignIn, retentionSummary, reviewTier, simulateSourceEvent, simulateValidation, sourceError, steps, toggleCheck, toolCatalog, transition, } from './workflow';
+import { STORAGE_KEY, acknowledgments, addComment, assignPolicy, changeField, createSubmission, currentValidation, emptyState, fingerprint, moveStep, parseState, publicationErrors, requiresDiscoverySignIn, retentionSummary, reviewTier, simulateSourceEvent, simulateValidation, sourceError, stepErrors, steps, submissionErrors, toggleCheck, toolCatalog, transition, } from './workflow';
 import type { Action, Field, Kind, Outcome, Policy, State, Submission, Tab, View } from './workflow';
 import styles from './page.module.css';
 function restore(): {
@@ -57,7 +57,7 @@ const narrative = {
     plugin: [
         ['Fix findings where the code lives', 'Checks belong to a specific commit. Publishers can turn a blocking finding into a pull request, merge the fix, and revalidate the new revision. Policy holds remain visible without preventing submission for review.', 'Claude ties validation to a commit and distinguishes blockers from review holds. GitHub adds the familiar check-to-PR recovery path.'],
         ['The listing stays with the source', 'The manifest and README supply the listing. Changing them through a pull request keeps the public description and installable code under the same review history. Revalidation refreshes the preview.', 'Claude also derives plugin metadata from source rather than maintaining a separate listing editor.'],
-        ['Make data use reviewable', 'Ask what data is kept, for how long, and how it is deleted. Structured retention choices reveal only the relevant follow-up fields. Describe external recipients and purpose rather than treating a yes/no answer as sufficient disclosure.', 'Claude documents four disclosure topics, including retention. The specific choices and conditional fields here are our product proposal, not verified Claude form controls.'],
+        ['Ask for the risk, then the exception', 'Distinguish reading personal data from storing it. Start with a short retention choice and ask for details only when needed. Point reviewers to maintained documentation instead of making publishers rewrite it.', 'The supplied Claude portal screenshots distinguish read-only access from storage and use broad retention bands. We keep that low-effort approach without adopting their retention threshold or visual treatment.'],
         ['Release through existing GitHub events', 'Publishers choose Releases, pushes to a tracked ref, or manual checks. An assigned policy determines who publishes; opting into automatic updates cannot override a hold or missing approval.', 'Claude documents webhook or scheduled update detection. GitHub can use its own release and push events without another webhook installation.'],
         ['Approval does not choose the launch date', 'The final review brings source, disclosures, and acknowledgments together. Submission starts review; approval makes a revision eligible to publish. The publication policy keeps the launch decision explicit.', 'Claude separates submission, approval, and publication. Four acknowledgment topics are documented, but their exact wording is not public.'],
     ],
@@ -238,7 +238,7 @@ function App() {
           {options.map(option => <FormControl key={option.value}>
             <Radio value={option.value} checked={f?.[key] === option.value} />
             <FormControl.Label>{option.value}</FormControl.Label>
-            <FormControl.Caption>{option.caption}</FormControl.Caption>
+            {option.caption && <FormControl.Caption>{option.caption}</FormControl.Caption>}
           </FormControl>)}
         </RadioGroup></div>;
     }
@@ -302,11 +302,20 @@ function App() {
       <p className="section-lead">{s.kind === 'plugin' ? 'The repository and folder supply the listing and every version. They lock on first submission.' : 'server.json supplies the endpoint. Connect to the running MCP server to import its tool metadata; sign in first if discovery is protected.'}</p>
       {s.kind === 'plugin' ? <>
         {input('repo', 'Repository', false, undefined, undefined, !!s.identity)}
-        <div className="form-grid">{input('path', 'Plugin folder', false, 'Folder containing plugin.json.', undefined, !!s.identity)}{input('ref', 'Tracked branch or tag')}</div>
+        <p className="source-summary"><code>{f.path || 'Repository root'}</code> · {f.ref ? `Tracking ${f.ref}` : 'Following the repository default branch'}</p>
+        <details className="progressive-details"><summary>Change folder or tracked reference</summary>
+          <div className="form-grid">{input('path', 'Plugin folder (optional)', false, 'Folder containing plugin.json. Leave empty for the repository root.', undefined, !!s.identity)}
+            {input('ref', 'Branch or tag (optional)', false, 'Leave empty to follow the default branch. A branch follows new commits; a tag stays on its selected version.')}</div>
+        </details>
         {select('visibility', 'Repository visibility', ['Public', 'Private'])}
         {f.visibility === 'Private' && <><Notice tone="warning">Private source can be inspected with consent, but cannot be published. Make it public, revalidate, and obtain approval first.</Notice>
           {checkbox('private-consent', 'Allow simulated inspection of this private repository.')}</>}
         {checkbox('permission', 'I have write access and permission to publish this repository.')}
+        <details className="progressive-details"><summary>What we check</summary><ul>
+          <li>Access to the repository and the selected folder and reference.</li>
+          <li>Manifest fields and declared plugin contents.</li>
+          <li>Blocking findings, policy holds, and non-blocking recommendations.</li>
+        </ul><p>Checks apply to one revision. A source change requires fresh validation; approval and publication remain separate.</p></details>
       </> : <>
         {input('endpoint', 'MCP server URL', false, 'Publicly reachable HTTPS endpoint using Streamable HTTP. Do not include tokens in the URL.', undefined, !!s.identity, 'url')}
         {select('topology', 'Connection type', ['Universal URL', 'Multiple URLs', 'URL pattern'])}
@@ -372,33 +381,34 @@ function App() {
     </>;
         if (label === 'Data handling')
             return <>
-      <p className="section-lead">Describe what this plugin and services you operate do with user data, including logs, caches, and uploaded files. Treat each declared connector&apos;s own storage policy separately.</p>
+      <p className="section-lead">Tell reviewers what the plugin reads, keeps, and sends to other services. Include personal data accessed through connectors.</p>
       {radio('personal', 'Does the plugin read or store personal data?', [
         { value: 'No', caption: 'It does not access identifiable user or customer information.' },
-        { value: 'Yes', caption: 'For example, names, email addresses, support tickets, or document content.' },
+        { value: 'Reads only', caption: 'It reads personal data, including through connectors, without keeping a copy.' },
+        { value: 'Reads and stores', caption: 'The plugin or a service you operate keeps a copy.' },
       ])}
-      {f.personal === 'Yes' && input('personalDetails', 'Personal data types and purpose', true, 'List the data accessed and why the plugin needs it. Do not paste actual customer data.')}
+      {f.personal === 'Yes' && <p className="field-help">Your earlier answer was Yes. Confirm whether the plugin only reads data or also stores a copy; your notes are preserved below.</p>}
       {radio('transfers', 'Does it send data beyond declared connectors?', [
         { value: 'No', caption: 'No additional external recipients.' },
-        { value: 'Yes', caption: 'Data also goes to services not declared as connectors, including analytics or logging providers.' },
+        { value: 'Yes', caption: 'Document the recipients, data sent, and purpose in your README or public docs.' },
       ])}
-      {f.transfers === 'Yes' && input('transferDetails', 'External recipients, data, and purpose', true, 'Name each service or domain, what it receives, and why. Include onward sharing by your service.')}
-      <h3>Retention and deletion</h3>
-      {radio('retention', 'How long do you keep data?', [
-        { value: 'No retention', caption: 'Process data without storing a copy, including in logs or caches.' },
-        { value: 'Session only', caption: 'Keep temporary data only while the task or session is running.' },
-        { value: 'Fixed period', caption: 'Automatically delete stored data after a defined number of days.' },
-        { value: 'Until deleted', caption: 'Keep data until a user or workspace administrator deletes it.' },
-        { value: 'Custom policy', caption: 'Different data types have different periods, or legal exceptions apply.' },
-      ], 'Choose the policy for data kept by the plugin or publisher, not the source system it reads.')}
-      {f.retention === 'Fixed period' && input('retentionDays', 'Maximum retention in days', false, 'Use a whole number. Include the longest period across copies and backups, or choose Custom policy for exceptions.', undefined, false, 'number')}
-      {f.retention && f.retention !== 'No retention' && <>
-        {input('storedData', 'What is kept, and where?', true, 'For example, request logs in your service, local cache files, or uploaded documents.')}
-        {f.retention === 'Custom policy' && input('retentionDetails', 'Retention schedule and justification', true, 'Specify each data type, maximum period, and any legal or backup exceptions.')}
-        {input('deletionProcess', 'How is data deleted?', true, 'Explain automatic cleanup or user/admin deletion, how to request it, and when copies and backups are removed.')}
+      {f.transfers === 'Yes' && input('transferDetails', 'Where are external transfers documented?', true, 'Link to a README section or public page covering recipients, data, and purpose. Existing explanations can stay here.')}
+      {radio('retention', 'How does your service retain data?', [
+        { value: 'No retention', caption: 'No copy remains after processing, including in logs or caches.' },
+        { value: 'Limited retention', caption: 'Data is deleted automatically after the session or a fixed period.' },
+        { value: 'Custom policy', caption: 'Data is kept until deleted, or retention varies by data type or legal requirement.' },
+      ], 'Answer for copies kept by the plugin or your service, not the original records in a connected system.')}
+      {f.retention === 'Limited retention' && <>
+        {select('retentionPeriod', 'Automatically delete', ['End of session', 'Days'])}
+        {f.retentionPeriod === 'Days' && input('retentionDays', 'Maximum retention in days', false, 'Include logs and backups. Use Custom policy if there are exceptions.', undefined, false, 'number')}
       </>}
-      {f.retention === 'No retention' && <p className="field-help">This declaration includes diagnostic logs and caches. If any copies remain after processing, choose a retention policy above.</p>}
-      {select('minors', 'Is the plugin intended for people under 18?', ['No', 'Yes'], 'Describe the intended audience, not whether a minor could technically access it.')}
+      {f.retention === 'Custom policy' && input('retentionDetails', 'Retention and deletion policy', true, 'Link to your policy or explain retention periods, exceptions, and how users can delete data.')}
+      {radio('minors', 'Is the plugin intended for people under 18?', [{ value: 'No', caption: '' }, { value: 'Yes', caption: '' }])}
+      <details className="progressive-details"><summary>Additional context (optional)</summary>
+        {input('personalDetails', 'Personal data notes', true, 'Add context for reviewers if the data use needs explanation.')}
+        {input('storedData', 'Stored data notes', true, 'Optional detail about copies, logs, or storage locations.')}
+        {input('deletionProcess', 'Deletion notes', true, 'Optional detail about deletion requests or backup cleanup.')}
+      </details>
     </>;
         if (label === 'Releases')
             return <>
@@ -433,17 +443,18 @@ function App() {
     </>;
         return <>
       <Listing s={s}/>
-      <dl className="facts"><dt>Source</dt><dd>{s.kind === 'plugin' ? `${f.repo} / ${f.path} @ ${f.ref}` : f.endpoint}</dd>
+      <dl className="facts"><dt>Source</dt><dd>{s.kind === 'plugin' ? `${f.repo} / ${f.path || '(root)'} @ ${f.ref || 'default branch'}` : f.endpoint}</dd>
         <dt>Checked revision</dt><dd>{s.validation?.revision ?? 'Not checked'}</dd>
         <dt>Publication</dt><dd>{s.policy} · {s.kind === 'plugin' ? f.trigger : reviewTier(s)}</dd></dl>
       <section className="submission-summary" aria-label="Submission details">
         <div className="summary-heading"><h3>{s.kind === 'plugin' ? 'Data handling and deletion' : 'Connection and reviewer access'}</h3>
           <Button variant="invisible" size="small" onClick={() => attempt(() => update(item => moveStep(item, item.kind === 'plugin' ? 2 : 4)))}>Edit details</Button></div>
         {s.kind === 'plugin' ? <dl className="facts">
-          <dt>Personal data</dt><dd>{f.personal}{f.personal === 'Yes' && <p>{f.personalDetails}</p>}</dd>
+          <dt>Personal data</dt><dd>{f.personal === 'Yes' ? 'Needs confirmation: previously Yes' : f.personal}{f.personalDetails && <p>{f.personalDetails}</p>}</dd>
           <dt>External transfers</dt><dd>{f.transfers}{f.transfers === 'Yes' && <p>{f.transferDetails}</p>}</dd>
           <dt>Retention</dt><dd>{retentionSummary(f)}</dd>
-          {f.retention !== 'No retention' && <><dt>Stored data</dt><dd>{f.storedData}</dd><dt>Deletion</dt><dd>{f.deletionProcess}</dd></>}
+          {f.storedData && <><dt>Stored data notes</dt><dd>{f.storedData}</dd></>}
+          {f.deletionProcess && <><dt>Deletion notes</dt><dd>{f.deletionProcess}</dd></>}
           <dt>Under-18 audience</dt><dd>{f.minors}</dd>
         </dl> : <dl className="facts">
           <dt>Authentication</dt><dd>{f.auth} · {f.auth === 'None' ? 'No sign-in' : f.discoveryAccess}</dd>
@@ -528,6 +539,10 @@ function App() {
     </>;
     }
     const tabs: Tab[] = ['Overview', 'Review', ...(s?.kind === 'plugin' ? ['Versions' as const] : []), 'Listing', s?.kind === 'plugin' ? 'Usage' : 'Health', 'Settings'];
+    const stepRequirements = s ? steps[s.kind].slice(0, s.step + 1).map((_, index) => ({ index, errors: stepErrors(s, index) })) : [];
+    const firstUnmet = stepRequirements.find(step => step.errors.length);
+    const finalStep = s && s.step === steps[s.kind].length - 1;
+    const progressionErrors = s ? finalStep ? submissionErrors(s) : stepRequirements.flatMap(step => step.errors) : [];
     return <>
     <a className="skip-link" href="#main">Skip to content</a>
     <header className="global-header"><div className="global-left"><Github size={30} aria-label="GitHub"/><Button className="header-name" onClick={() => go('repository')} variant="invisible">northwind / support-toolkit</Button></div></header>
@@ -557,7 +572,7 @@ function App() {
       </div>}
       {state.view === 'new' && <div className="page choose-page"><h1 ref={heading} tabIndex={-1}>New Marketplace listing</h1><p>Publish a versioned plugin or connect a live MCP service.</p>
         <div className="type-options">{(['plugin', 'connector'] as const).map(kind => <section className="type-option" key={kind}>{kind === 'plugin' ? <Package size={28}/> : <Server size={28}/>}<h2>{kind === 'plugin' ? 'Plugin bundle' : 'MCP server'}</h2>
-          <p>{kind === 'plugin' ? 'Source-derived listing, commit checks, release-triggered versions.' : 'Imported tools, endpoint compatibility, reproducible reviewer tests.'}</p>
+          <p>{kind === 'plugin' ? 'Publish a versioned package of skills, agents, and connector references from a repository. Maintain it through commits and releases.' : 'List a running remote service that users connect to. Maintain its authentication, tools, availability, and support independently of plugin releases.'}</p>
           <Button className="button primary" disabled={blocked} onClick={() => create(kind)} variant="primary" trailingVisual={ArrowRight}>Start {kind === 'plugin' ? 'plugin' : 'connector'} submission</Button></section>)}</div>
         <p className="muted">Starting again resumes your existing submission for that listing type.</p>
       </div>}
@@ -568,13 +583,18 @@ function App() {
           {!state.submissions.length && <div className="empty"><Folder size={28}/><h2>No submissions yet</h2><p>Start with the plugin detected in your repository, or import its MCP server.</p><Button className="button" onClick={() => go('repository')} variant="default">Open repository</Button></div>}
           {state.submissions.length > 0 && !state.submissions.some(item => `${item.fields.name} ${item.kind}`.toLowerCase().includes(query.toLowerCase())) && <p className="empty">No listings match your search.</p>}</div>
       </div>}
-      {state.view === 'wizard' && s && <div className="page"><div className="page-heading"><div><Button className="text-button" onClick={() => go('listings')} variant="invisible" leadingVisual={ArrowLeft}>Your listings</Button><h1 ref={heading} tabIndex={-1}>Publish {s.kind === 'plugin' ? 'a plugin' : 'an MCP server'}</h1></div><div className="actions"><Badge>{s.live ? 'Live listing · draft update' : 'Draft'}</Badge><Button className="button" onClick={() => go('console')} variant="default">Open publisher console</Button></div></div>
+      {state.view === 'wizard' && s && <div className="page"><div className="page-heading"><div><Button className="text-button" onClick={() => go('listings')} variant="invisible" leadingVisual={ArrowLeft}>Your listings</Button><h1 ref={heading} tabIndex={-1}>Publish {s.kind === 'plugin' ? 'a plugin' : 'an MCP server'}</h1></div><div className="actions"><Badge>{s.live ? 'Live listing · draft update' : 'Draft'}</Badge><Button disabled={busy} onClick={() => go('listings')}>Save and exit</Button><Button className="button" onClick={() => go('console')} variant="default">Open publisher console</Button></div></div>
         <div className="publisher-wizard"><nav className="step-nav" aria-label="Submission steps"><ol>{steps[s.kind].map((label, i) => <li key={label}><Button aria-current={i === s.step ? 'step' : undefined} disabled={blocked || busy} onClick={() => attempt(() => update(item => moveStep(item, i)))} variant="invisible">
           <span className="step-label"><span className="step-number">{i + 1}</span>{label}</span></Button></li>)}</ol></nav>
           <section className="step-content"><h2>{steps[s.kind][s.step]}</h2>{wizardBody()}<footer className="wizard-actions"><span className="muted" role="status">{storageError ? 'Not saved' : 'Saved in this browser'}</span>
-            <div className="actions"><Button className="button" disabled={busy} onClick={() => go('listings')} variant="default">Save and exit</Button>{s.step > 0 && <Button className="button" disabled={busy} onClick={() => attempt(() => update(item => moveStep(item, item.step - 1)))} variant="default">Back</Button>}
-              <Button className="button primary" disabled={busy || blocked} onClick={() => s.step === steps[s.kind].length - 1 ? act('submit') : attempt(() => update(item => moveStep(item, item.step + 1)))} variant="primary" trailingVisual={ArrowRight}>
-                {s.step === steps[s.kind].length - 1 ? 'Submit for review' : 'Continue'}</Button></div></footer></section></div>
+            <div className="actions">{s.step > 0 && <Button className="button" disabled={busy} onClick={() => attempt(() => update(item => moveStep(item, item.step - 1)))} variant="default">Back</Button>}
+              <Button className="button primary" disabled={busy || blocked || progressionErrors.length > 0} aria-describedby={progressionErrors.length || busy ? 'progression-reason' : undefined} onClick={() => finalStep ? act('submit') : attempt(() => update(item => moveStep(item, item.step + 1)))} variant="primary" trailingVisual={ArrowRight}>
+                {finalStep ? 'Submit for review' : 'Continue'}</Button></div>
+            {(progressionErrors.length > 0 || busy) && <div className="progression-reason" id="progression-reason" role="status">
+              <span>{busy ? 'Wait for source checks to finish.' : progressionErrors[0]}</span>
+              {!busy && firstUnmet && firstUnmet.index < s.step && <Button variant="invisible" size="small" onClick={() => attempt(() => update(item => moveStep(item, firstUnmet.index)))}>Go to {steps[s.kind][firstUnmet.index]}</Button>}
+            </div>}
+          </footer></section></div>
       </div>}
       {state.view === 'console' && s && <div className="page"><div className="page-heading"><div><Button className="text-button" onClick={() => go('listings')} variant="invisible" leadingVisual={ArrowLeft}>Your listings</Button><h1 ref={heading} tabIndex={-1}>{s.fields.name || 'Publisher console'}</h1><p className="muted">Publisher console · {s.kind}</p></div><div className="actions"><Badge>{s.status}</Badge>{s.live && <Button className="button" onClick={() => go('public')} variant="default">View live listing</Button>}</div></div>
         <div className="console-layout"><nav className="console-nav" aria-label="Publisher console">{tabs.map(tab => <Button key={tab} aria-current={tab === state.tab ? 'page' : undefined} onClick={() => go('console', tab)} variant="invisible">{tab}</Button>)}</nav>

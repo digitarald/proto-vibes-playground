@@ -27,13 +27,13 @@ export const acknowledgments = {
 };
 
 const additionalFieldDefaults = {
-  retentionDays: '', retentionDetails: '', storedData: '', deletionProcess: '',
+  retentionDays: '', retentionPeriod: 'Days', retentionDetails: '', storedData: '', deletionProcess: '',
   personalDetails: '', transferDetails: '', discoveryAccess: 'Sign-in required',
   reviewerSetup: '', reviewerSignIn: '', reviewerRestrictions: '',
 };
 const defaultFields = {
   ...additionalFieldDefaults,
-  repo: 'northwind/support-toolkit', path: 'plugins/support-toolkit', ref: 'main',
+  repo: 'northwind/support-toolkit', path: 'plugins/support-toolkit', ref: '',
   visibility: 'Public', endpoint: 'https://mcp.northwind.example/mcp', topology: 'Universal URL',
   name: 'Northwind Helpdesk', summary: 'Find tickets, projects, and documents from your workspace.',
   description: 'Bring support context into your coding workflow. Find an open ticket, look up its project, and read the related runbook.',
@@ -48,7 +48,7 @@ const defaultFields = {
   testSteps: 'Sign in to the seeded demo workspace using OAuth (no SSO or MFA).\nsearch_tickets: search NW-42; expect one ticket.\nget_project: open project API; expect its title and owner.\nfind_documents: search migration; expect the runbook link.\nAll tools are read-only; no cleanup required.',
   notes: '', trigger: 'GitHub Releases', autoPublish: 'No', reviewTier: 'Community',
 };
-export const retentionOptions = ['No retention', 'Session only', 'Fixed period', 'Until deleted', 'Custom policy'];
+export const retentionOptions = ['No retention', 'Limited retention', 'Custom policy'];
 export const toolCatalog = [
   { name: 'search_tickets', title: 'Search tickets', description: 'Find tickets visible to the signed-in user by query and status.', input: { type: 'object', properties: { query: { type: 'string' }, status: { type: 'string', enum: ['open', 'closed'] } }, required: ['query'] }, scope: 'tickets:read', data: 'Ticket text, requester names, and email addresses', example: 'Search for NW-42', expected: 'One matching ticket with its title and URL' },
   { name: 'get_project', title: 'Get project', description: 'Read a project and its owner by project ID.', input: { type: 'object', properties: { projectId: { type: 'string' } }, required: ['projectId'] }, scope: 'projects:read', data: 'Project names and owner profiles', example: 'Get project API', expected: 'The API project title and owner' },
@@ -110,7 +110,6 @@ export function sourceError(s: Submission): string | null {
   if (s.kind === 'connector') return validHttps(f.endpoint) ? null : 'Enter an HTTPS MCP endpoint without embedded credentials.';
   const repo = f.repo.trim().replace(/^https:\/\/github\.com\//, '').replace(/\/$/, '');
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return 'Enter owner/repository or a GitHub repository URL.';
-  if (!f.ref.trim()) return 'Enter a tracked branch or tag.';
   if (f.path.startsWith('/') || f.path.includes('\\') || f.path.split('/').includes('..')) return 'Use a repository-relative plugin folder without parent traversal.';
   if (f.visibility === 'Private' && !s.checks.includes('private-consent')) return 'Consent to private-source inspection before running checks.';
   return null;
@@ -119,12 +118,13 @@ export function sourceError(s: Submission): string | null {
 const choices: Partial<Record<Field, readonly string[]>> = {
   visibility: ['Public', 'Private'], topology: ['Universal URL', 'Multiple URLs', 'URL pattern'],
   auth: ['OAuth DCR', 'OAuth CIMD', 'Publisher-provided OAuth client', 'Custom connection', 'None'],
-  personal: ['', 'No', 'Yes'], transfers: ['', 'No', 'Yes'], minors: ['', 'No', 'Yes'],
+  personal: ['', 'No', 'Reads only', 'Reads and stores', 'Yes'], transfers: ['', 'No', 'Yes'], minors: ['', 'No', 'Yes'],
   health: ['', 'No', 'Yes'], sponsored: ['', 'No', 'Yes'],
   ownership: ['First-party API', 'Authorized partner proxy', 'Uncontrolled third-party API'],
   trigger: ['GitHub Releases', 'Push to tracked ref', 'Manual'],
   autoPublish: ['No', 'Yes'], reviewTier: ['Community', 'Verified'],
   retention: ['', ...retentionOptions],
+  retentionPeriod: ['End of session', 'Days'],
   discoveryAccess: ['Sign-in required', 'Public metadata'],
 };
 export function stepErrors(s: Submission, step = s.step): string[] {
@@ -162,14 +162,11 @@ export function stepErrors(s: Submission, step = s.step): string[] {
   if (label === 'Data handling') {
     required('personal', 'Personal data disclosure'); required('transfers', 'External transfer disclosure');
     required('retention', 'Data retention'); required('minors', 'Audience disclosure');
-    if (f.personal === 'Yes') required('personalDetails', 'Personal data types and purpose');
-    if (f.transfers === 'Yes') required('transferDetails', 'External recipients, data, and purpose');
-    if (f.retention && f.retention !== 'No retention') {
-      required('storedData', 'Data kept by the plugin or publisher');
-      required('deletionProcess', 'Deletion process');
-    }
-    if (f.retention === 'Fixed period' && (!/^[1-9]\d*$/.test(f.retentionDays) || !Number.isSafeInteger(Number(f.retentionDays)))) errors.push('Enter a whole number of retention days greater than zero.');
-    if (f.retention === 'Custom policy') required('retentionDetails', 'Retention schedule and justification');
+    if (f.personal === 'Yes') errors.push('Confirm whether the plugin only reads personal data or also stores a copy.');
+    if (f.transfers === 'Yes') required('transferDetails', 'External-transfer documentation reference');
+    if (f.personal === 'Reads and stores' && f.retention === 'No retention') errors.push('Choose a retention policy for the personal data you store, or change the personal-data answer.');
+    if (f.retention === 'Limited retention' && f.retentionPeriod === 'Days' && (!/^[1-9]\d*$/.test(f.retentionDays) || !Number.isSafeInteger(Number(f.retentionDays)))) errors.push('Enter a whole number of retention days greater than zero.');
+    if (f.retention === 'Custom policy') required('retentionDetails', 'Retention and deletion policy or documentation reference');
   }
   if (label === 'Data and testing') {
     required('health', 'Health data disclosure'); required('sponsored', 'Sponsored content disclosure');
@@ -196,7 +193,7 @@ function authenticationErrors(s: Submission): string[] {
   return errors;
 }
 export function retentionSummary(fields: Fields): string {
-  if (fields.retention === 'Fixed period') return `${fields.retentionDays || 'Unspecified'} days`;
+  if (fields.retention === 'Limited retention') return fields.retentionPeriod === 'End of session' ? 'Deleted at the end of the session' : `${fields.retentionDays || 'Unspecified'} days, then automatically deleted`;
   if (fields.retention === 'Custom policy') return fields.retentionDetails || 'Custom policy not described';
   return fields.retention || 'Not specified';
 }
@@ -212,6 +209,7 @@ export function changeField(s: Submission, key: Field, value: string): Submissio
   if (s.identity && (s.kind === 'plugin' ? ['repo', 'path'] : ['endpoint']).includes(key)) throw new Error('Source identity is locked after submission.');
   if (s.live && key === 'slug') throw new Error('The published slug cannot change.');
   if (s.kind === 'plugin' && ['name', 'summary', 'description'].includes(key)) throw new Error('Plugin listing text comes from the source. Use a source pull request.');
+  if (key === 'personal' && value === 'Yes') throw new Error('Choose Reads only or Reads and stores.');
   if (choices[key] && !choices[key]?.includes(value)) throw new Error(`Invalid ${key} selection.`);
   const next = { ...s, fields: { ...s.fields, [key]: value }, verifiedFingerprint: null, publicationRequested: false };
   if (fingerprint(next) !== fingerprint(s)) {
@@ -219,7 +217,7 @@ export function changeField(s: Submission, key: Field, value: string): Submissio
     next.fixPr = null;
   }
   if (['access', 'testSteps', 'safeguards', 'reviewerSetup', 'reviewerSignIn', 'reviewerRestrictions'].includes(key)) next.checks = next.checks.filter(c => c !== 'tested');
-  if (['personal', 'transfers', 'retention', 'retentionDays', 'retentionDetails', 'storedData', 'deletionProcess', 'personalDetails', 'transferDetails', 'minors', 'ownership', 'health', 'sponsored', 'safeguards'].includes(key)) {
+  if (['personal', 'transfers', 'retention', 'retentionPeriod', 'retentionDays', 'retentionDetails', 'storedData', 'deletionProcess', 'personalDetails', 'transferDetails', 'minors', 'ownership', 'health', 'sponsored', 'safeguards'].includes(key)) {
     next.checks = next.checks.filter(c => !c.startsWith('compliance-'));
   }
   if (['repo', 'path'].includes(key)) next.checks = next.checks.filter(c => !['private-consent', 'permission'].includes(c));
@@ -354,9 +352,12 @@ function restoreAdditionalFields(value: unknown): void {
   for (const [key, fallback] of Object.entries(additionalFieldDefaults)) {
     if (!(key in value)) value[key] = fallback;
   }
-  // Keep earlier free-text retention answers available for review rather than discarding drafts.
-  if (typeof value.retention === 'string' && value.retention && !retentionOptions.includes(value.retention)) {
-    value.retentionDetails = value.retention;
+  // Preserve earlier policy choices and details when grouping them into the shorter form.
+  if (value.retention === 'Session only' || value.retention === 'Fixed period') {
+    value.retentionPeriod = value.retention === 'Session only' ? 'End of session' : 'Days';
+    value.retention = 'Limited retention';
+  } else if (typeof value.retention === 'string' && value.retention && !retentionOptions.includes(value.retention)) {
+    value.retentionDetails = [value.retention, value.retentionDetails].filter(Boolean).join('\n');
     value.retention = 'Custom policy';
   }
 }

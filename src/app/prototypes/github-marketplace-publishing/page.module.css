@@ -59,6 +59,12 @@
 .surface :global(.test-coverage small) { color: var(--fgColor-muted); }
 .surface :global(.submission-summary) { margin-block: 28px; }
 .surface :global(.submission-summary .facts) { margin-top: 8px; }
+.surface :global(.source-summary) { margin: 12px 0; color: var(--fgColor-muted); font-size: 12px; }
+.surface :global(.progressive-details) { margin: 20px 0; }
+.surface :global(.progressive-details > summary) { cursor: pointer; color: var(--fgColor-muted); font-size: 12px; }
+.surface :global(.progressive-details ul) { padding-left: 20px; margin: 12px 0; list-style: disc; }
+.surface :global(.progressive-details > p) { color: var(--fgColor-muted); font-size: 12px; }
+.surface :global(.progression-reason) { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: var(--fgColor-muted); }
 .surface :global(*) { box-sizing: border-box; scrollbar-color: var(--borderColor-emphasis) var(--subtle); scrollbar-width: thin; }
 .surface :global(a) { touch-action: manipulation; }
 .surface :global(a:focus-visible), .surface :global(summary:focus-visible) {
